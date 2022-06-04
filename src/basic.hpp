@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <float.h>
 using namespace std;
 using namespace Eigen;
 
@@ -211,6 +212,14 @@ public:
 	double intensity;
 	double refraction_rate;
 	Ray(){}
+	/*
+	Init a ray
+	Args:
+		start [Vector3d]: [the start point of the ray]
+		direction [Vector3d]: [the direction of the ray]
+		intensity [double]: [the intensity of the ray]
+		refraction [double]: [the refraction rate of the ray]
+	*/
 	Ray(Vector3d start, Vector3d direction, double intensity, double refraction)
 	{
 		this->start = start;
@@ -219,3 +228,95 @@ public:
 		this->refraction_rate = refraction;
 	}
 };
+
+class BoundingBox
+{
+public:
+	double min_x = 0;
+	double min_y = 0;
+	double min_z = 0;
+	double max_x = 0;
+	double max_y = 0;
+	double max_z = 0;
+	BoundingBox() {}
+	/*
+	Init a bounding box
+	Args:
+		min_x [double]: [the min x of the object]
+		min_y [double]: [the min y of the object]
+		min_z [double]: [the min z of the object]
+		max_x [double]: [the max x of the object]
+		max_y [double]: [the max y of the object]
+		max_z [double]: [the max z of the object]
+	*/
+	BoundingBox(double min_x, double min_y, double min_z, double max_x, double max_y, double max_z)
+	{
+		this->min_x = min_x;
+		this->min_y = min_y;
+		this->min_z = min_z;
+		this->max_x = max_x;
+		this->max_y = max_y;
+		this->max_z = max_z;
+	}
+
+	void Set(double min_x, double min_y, double min_z, double max_x, double max_y, double max_z)
+	{
+		this->min_x = min_x;
+		this->min_y = min_y;
+		this->min_z = min_z;
+		this->max_x = max_x;
+		this->max_y = max_y;
+		this->max_z = max_z;
+	}
+};
+
+/*
+Judge whether a face is inside a bounding box
+Args:
+	face [TriangleMesh]: [the face]
+	box [BoundingBox]: [the bounding box]
+Returns:
+	result [bool]: [whether inside or not]
+*/
+bool JudgeFaceInsideBox(TriangleMesh& face, BoundingBox& box)
+{
+	bool result = 0;
+	for (int i = 0; i < 3; i++)
+	{
+		double x = face.vertexs[i](0);
+		double y = face.vertexs[i](1);
+		double z = face.vertexs[i](2);
+		if (x >= box.min_x && x <= box.max_x && y >= box.min_y && y <= box.max_y && z >= box.min_z && z <= box.max_z)
+		{
+			result = 1;
+			break;
+		}
+	}
+	return result;
+}
+
+/*
+Judge whether a 2D point is inside a 2D rectangle
+Args:
+	p_x [double]: [the x of the point]
+	p_y [double]: [the y of the point]
+	min_x [double]: [the min x of the rectangle]
+	min_y [double]: [the min y of the rectangle]
+	max_x [double]: [the max x of the rectangle]
+	max_y [double]: [the max y of the rectangle]
+Returns:
+	result [bool] : [whether the 2D point is inside the 2D rectangle or not] 
+*/
+bool JudgePointInsideRectangle(double p_x, double p_y, double min_x, double min_y, double max_x, double max_y)
+{
+	bool result = 1;
+	if (p_x < min_x || p_x > max_x)
+	{
+		result = 0;
+	}
+	if (p_y < min_y || p_y > max_y) 
+	{
+		result = 0;
+	}
+	return result;
+}
