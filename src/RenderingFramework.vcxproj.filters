@@ -27,10 +27,10 @@
     <ClInclude Include="RenderingFramework.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="camera.hpp">
+    <ClInclude Include="basic.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="mesh.hpp">
+    <ClInclude Include="ray_tracing.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

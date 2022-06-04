@@ -71,16 +71,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;$(IncludePath)</IncludePath>
+    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;G:\ProgrammingEnvironment\eigen-3.4.0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;$(IncludePath)</IncludePath>
+    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;G:\ProgrammingEnvironment\eigen-3.4.0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;$(IncludePath)</IncludePath>
+    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;G:\ProgrammingEnvironment\eigen-3.4.0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;$(IncludePath)</IncludePath>
+    <IncludePath>G:\ProgrammingEnvironment\opencv\build\include;G:\ProgrammingEnvironment\opencv\build\include\opencv2;G:\ProgrammingEnvironment\eigen-3.4.0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -144,8 +144,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="camera.hpp" />
-    <ClInclude Include="mesh.hpp" />
+    <ClInclude Include="basic.hpp" />
+    <ClInclude Include="ray_tracing.hpp" />
     <ClInclude Include="RenderingFramework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />

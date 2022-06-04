@@ -6,7 +6,7 @@
 
 #define MAX_LOADSTRING 100
 
-
+#include "basic.hpp"
 
 
 
@@ -33,7 +33,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-
     // 初始化全局字符串
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_RENDERINGFRAMEWORK, szWindowClass, MAX_LOADSTRING);
@@ -44,6 +43,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         return FALSE;
     }
+
+    //TODO
+    const char* intrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\intrinsic.txt";
+    const char* extrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\pose\\scene0000_01_0.txt";
+    const char* ply_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\ply\\scene0000_01_vh_clean_2.ply";
+    Camera my_camera(intrinsic_name, extrinsic_name);
+    PLYMesh my_mesh(ply_name);
+
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RENDERINGFRAMEWORK));
 
