@@ -48,8 +48,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     const char* intrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\intrinsic.txt";
     const char* extrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\pose\\scene0000_01_0.txt";
     const char* ply_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\ply\\scene0000_01_vh_clean_2.ply";
-    Camera my_camera(intrinsic_name, extrinsic_name);
-    PLYMesh my_mesh(ply_name);
+    const char* save_name = "C:\\Users\\SerCharles\\Desktop\\result.png";
+    Vector3d a[10000];
+    int w = 80;
+    int h = 60;
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w; j++)
+        {
+            a[i * w + j] << 0, 0, 1;
+        }
+    }
+    SavePicture(a, save_name, w, h);
 
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RENDERINGFRAMEWORK));

@@ -1,13 +1,16 @@
 #pragma once
-#include <Eigen\Dense>
 #include <string>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include <float.h>
+#include <Eigen\Dense>
+#include <opencv2/core/core.hpp> 
+#include <opencv2/highgui/highgui.hpp>  
 using namespace std;
 using namespace Eigen;
+using namespace cv;
 
 
 /*
@@ -15,9 +18,9 @@ Load an matrix file
 Returns:
 	matrix [double matrix], [4 * 4]: [the loaded extrinsic]
 */
-Matrix<double, 4, 4> LoadMatrix(const char* filename)
+Matrix4d LoadMatrix(const char* filename)
 {
-	Matrix<double, 4, 4> matrix;
+	Matrix4d matrix;
 	ifstream infile;
 	infile.open(filename, ios::in);
 	for (int i = 0; i < 4; i++)
@@ -57,16 +60,26 @@ int StringToInt(string str)
 class Camera
 {
 public:
-	Matrix<double, 4, 4> extrinsic;
-	Matrix<double, 4, 4> intrinsic;
+	Matrix3d rotation;
+	Vector3d translation;
+	double cx;
+	double cy;
+	double fx;
+	double fy;
 	Camera()
 	{
 
 	}
 	Camera(const char* intrinsic_name, const char* extrinsic_name)
 	{
-		this->extrinsic = LoadMatrix(extrinsic_name);
-		this->intrinsic = LoadMatrix(intrinsic_name);
+		Matrix4d extrinsic = LoadMatrix(extrinsic_name);
+		this->rotation = extrinsic.block<3, 3>(0, 0);
+		this->translation = extrinsic.block<3, 1>(0, 3);
+		Matrix4d intrinsic = LoadMatrix(intrinsic_name);
+		this->fx = intrinsic(0, 0);
+		this->fy = intrinsic(1, 1);
+		this->cx = intrinsic(0, 2);
+		this->cy = intrinsic(1, 2);
 	}
 };
 
@@ -93,9 +106,9 @@ public:
 		norm_a [Vector3d]: [the normal of the the first vertex, [-1, 1]]
 		norm_b [Vector3d]: [the normal of the the second vertex, [-1, 1]]
 		norm_c [Vector3d]: [the normal of the the third vertex, [-1, 1]]
-		color_a [Vector3d]: [the color of the the first vertex, [0, 256)]
-		color_b [Vector3d]: [the color of the the second vertex, [0, 256)]
-		color_c [Vector3d]: [the color of the the third vertex, [0, 256)]
+		color_a [Vector3d]: [the color of the the first vertex, [0, 1)]
+		color_b [Vector3d]: [the color of the the second vertex, [0, 1)]
+		color_c [Vector3d]: [the color of the the third vertex, [0, 1)]
 	*/
 	TriangleMesh(int id, int id_a, int id_b, int id_c, Vector3d& place_a, Vector3d& place_b, Vector3d& place_c,
 		Vector3d& norm_a, Vector3d& norm_b, Vector3d& norm_c, Vector3d& color_a, Vector3d& color_b, Vector3d& color_c)
@@ -113,6 +126,20 @@ public:
 		this->colors[0] = color_a;
 		this->colors[1] = color_b;
 		this->colors[2] = color_c;
+	}
+
+	/*
+	Transform all the vertexs and normals to the camera coordinate
+	Args:
+		camera [Camera]: [the camera]
+	*/
+	void CoordinateTransform(Camera& camera)
+	{	
+		for (int i = 0; i < 3; i++)
+		{
+			this->vertexs[i] = camera.rotation * this->vertexs[i] + camera.translation; //first rotation, then translation
+			this->normals[i] = camera.rotation * this->normals[i];
+		}
 	}
 };
 
@@ -150,13 +177,13 @@ vector<TriangleMesh> ReadPLYMesh(char* filename)
 		string substr_13 = line.substr(0, 13);
 		if (substr_15 == vertex_line)
 		{
-			string vertex_num = line.substr(15);
-			vertex_num = StringToInt(vertex_num);
+			string vertex_num_str = line.substr(15);
+			vertex_num = StringToInt(vertex_num_str);
 		}
 		else if (substr_13 == face_line)
 		{
-			string face_num = line.substr(13);
-			face_num = StringToInt(face_num);
+			string face_num_str = line.substr(13);
+			face_num = StringToInt(face_num_str);
 		}
 		else if (line == end_line)
 		{
@@ -171,6 +198,9 @@ vector<TriangleMesh> ReadPLYMesh(char* filename)
 		infile >> x >> y >> z;
 		infile >> nx >> ny >> nz;
 		infile >> r >> g >> b >> a;
+		r = r / 256;
+		g = g / 256;
+		b = b / 256;
 		Vector3d new_vertex;
 		new_vertex << x, y, z;
 		Vector3d new_norm;
@@ -212,6 +242,7 @@ public:
 	double intensity;
 	double refraction_rate;
 	Ray(){}
+
 	/*
 	Init a ray
 	Args:
@@ -319,4 +350,76 @@ bool JudgePointInsideRectangle(double p_x, double p_y, double min_x, double min_
 		result = 0;
 	}
 	return result;
+}
+
+/*
+Get the intersection point between a triangle mesh and a ray, using the Moller-Trumbore Algorithm
+Args:
+	face [TriangleMesh]: [the mesh to be intersected]
+	ray [Ray]: [the ray to be intersected]
+	t [double]: [the intersecting t of the ray, -1 if empty]
+	fraction [Vector3d]: [the fraction of the intersection point to the mesh, used in getting the final color]
+*/
+void GetIntersectionMesh(TriangleMesh& face, Ray& ray, double& t, Vector3d& fraction)
+{
+	Vector3d o = ray.start;
+	Vector3d d = ray.direction;
+	Vector3d p0 = face.vertexs[0];
+	Vector3d p1 = face.vertexs[1];
+	Vector3d p2 = face.vertexs[2];
+	Vector3d e1 = p1 - p0;
+	Vector3d e2 = p2 - p0;
+	Vector3d s = o - p0;
+	Vector3d s1 = d.cross(e2);
+	Vector3d s2 = s.cross(e1);
+	double down = s1.dot(e1);
+	if (down == 0)
+	{
+		t = -1;
+		return;
+	}
+	t = s2.dot(e2) / down;
+	double b1 = s1.dot(s) / down;
+	double b2 = s2.dot(d) / down;
+	double b0 = 1 - b1 - b2;
+	if (t <= 0 || b0 < 0 || b0 > 1 || b1 < 0 || b1 > 1 || b2 < 0 || b2 > 1)
+	{
+		t = -1;
+		return;
+	}
+	fraction << b0, b1, b2;
+}
+
+/*
+Use opencv to save the result picture
+Args:
+	data [array of Vector3d], [H * W]: [the result data]
+	save_place [const char*]: [the full saving place]
+	width [int]: [the width of the picture]
+	height [int]: [the height of the picture]
+*/
+void SavePicture(Vector3d* data, const char* save_place, int width, int height)
+{
+	Mat image = Mat::zeros(Size(width, height), CV_8UC3);
+	for (int i = 0; i < height; i++)
+	{
+		for (int j = 0; j < width; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				int color = int(data[i * width + j](k) * 256);
+				if (color >= 256)
+				{
+					color = 255;
+				}
+				else if (color < 0)
+				{
+					color = 0;
+				}
+				uchar ucolor = uchar(color);
+				image.at<Vec3b>(i, j)[2 - k] = ucolor;
+			}
+		}
+	}
+	imwrite(save_place, image);
 }
