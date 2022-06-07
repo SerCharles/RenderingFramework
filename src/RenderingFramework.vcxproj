@@ -152,7 +152,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="basic.hpp" />
     <ClInclude Include="ray_tracing.hpp" />
     <ClInclude Include="RenderingFramework.h" />
     <ClInclude Include="Resource.h" />
