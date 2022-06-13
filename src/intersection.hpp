@@ -1,4 +1,6 @@
+//the computer geometry functions, mainly in getting the intersections between points
 #pragma once
+
 
 /*
 Judge whether a 2D point is inside a 2D rectangle
