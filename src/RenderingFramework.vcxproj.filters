@@ -27,7 +27,19 @@
     <ClInclude Include="RenderingFramework.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ray_tracing.hpp">
+    <ClInclude Include="mesh_model.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="camera_model.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="intersection.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="light_model.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

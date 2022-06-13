@@ -151,11 +151,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="camera_model.hpp" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="ray_tracing.hpp" />
+    <ClInclude Include="intersection.hpp" />
+    <ClInclude Include="light_model.hpp" />
+    <ClInclude Include="mesh_model.hpp" />
     <ClInclude Include="RenderingFramework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="utils.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RenderingFramework.cpp" />
