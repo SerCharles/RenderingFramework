@@ -10,17 +10,14 @@ Definition of light and phong model
 class Light
 {
 public:
-	Vector3d ambient;
-	Vector3d diffuse;
-	Vector3d specular;
+	Vector3d color;
 	Vector3d direction;
 	Light() {}
-	Light()
+
+	Light(Vector3d& color, Vector3d& direction)
 	{
-		ambient << 1.0, 1.0, 1.0;
-		diffuse << 1.0, 1.0, 1.0;
-		specular << 1.0, 1.0, 1.0;
-		direction << 0, -1, 0;
+		this->color = color;
+		this->direction = direction;
 	}
 };
 
@@ -36,9 +33,9 @@ Returns:
 Vector3d GetAmbient(Light& light, Ray& ray, Vertex& vertex)
 {
 	Vector3d ambient;
-	double r = vertex.color(0) * light.ambient(0);
-	double g = vertex.color(1) * light.ambient(1);
-	double b = vertex.color(2) * light.ambient(2);
+	double r = vertex.color(0) * light.color(0);
+	double g = vertex.color(1) * light.color(1);
+	double b = vertex.color(2) * light.color(2);
 	ambient << r, g, b;
 	return ambient;
 }
@@ -67,9 +64,9 @@ Vector3d GetDiffuse(Light& light, Ray& ray, Vertex& vertex)
 	{
 		weight = 0;
 	}
-	double r = vertex.color(0) * light.diffuse(0) * weight;
-	double g = vertex.color(1) * light.diffuse(1) * weight;
-	double b = vertex.color(2) * light.diffuse(2) * weight;
+	double r = light.color(0) * weight;
+	double g = light.color(1) * weight;
+	double b = light.color(2) * weight;
 	diffuse << r, g, b;
 	return diffuse;
 }
@@ -94,7 +91,7 @@ Vector3d GetSpecular(Light& light, Ray& ray, Vertex& vertex)
 	Vector3d l = light.direction;
 	Vector3d v = ray.direction;
 	double normal_speed = l.dot(-n);
-	assert(normal_speed >= 0);
+	//assert(normal_speed >= 0);
 	Vector3d normal_velocity = -n * normal_speed;
 	Vector3d tangent_velocity = l - normal_velocity;
 	Vector3d r = tangent_velocity - normal_velocity;
@@ -111,10 +108,10 @@ Vector3d GetSpecular(Light& light, Ray& ray, Vertex& vertex)
 	}
 
 	Vector3d specular;
-	double r = vertex.color(0) * light.specular(0) * weight;
-	double g = vertex.color(1) * light.specular(1) * weight;
-	double b = vertex.color(2) * light.specular(2) * weight;
-	specular << r, g, b;
+	double red = light.color(0) * weight;
+	double green = light.color(1) * weight;
+	double blue = light.color(2) * weight;
+	specular << red, green, blue;
 	return specular;
 }
 
@@ -134,9 +131,9 @@ Vector3d PhongModel(Light& light, Ray& ray, TriangleMesh& face, Vector3d& fracti
 	color << 0, 0, 0;
 	for (int i = 0; i < 3; i++)
 	{
-		Vector3d ambient = GetAmbient(light, ray, face.vertexs[0]);
-		Vector3d diffuse = GetDiffuse(light, ray, face.vertexs[0]);
-		Vector3d specular = GetSpecular(light, ray, face.vertexs[0]);
+		Vector3d ambient = GetAmbient(light, ray, face.vertexs[0]) * face.ambient;
+		Vector3d diffuse = GetDiffuse(light, ray, face.vertexs[0]) * face.diffuse;
+		Vector3d specular = GetSpecular(light, ray, face.vertexs[0]) * face.specular;
 		Vector3d the_color = ambient + diffuse + specular;
 		color = color + the_color * fraction(i);
 	}
@@ -155,10 +152,100 @@ public:
 	Light light;
 	const double threshold = 0.01;
 	const int max_depth = 6;
+	Vector3d* results;
+
+	~RayTracing()
+	{
+		this->objects.clear();
+	}
 
 	RayTracing()
 	{
-		//TODO
+		Vector3d light_color;
+		Vector3d light_direction;
+		light_color << 1.0, 1.0, 1.0;
+		light_direction << 0, -1.0, 0;
+		this->light = Light(light_color, light_direction);
+
+		int picture_size = 500;
+		double r = 10 * sqrt(2.0);
+		double theta = 45.0 / 180.0 * PI;
+		double phi = 0;
+		this->camera = Camera(picture_size, r, theta, phi);
+
+		this->objects.clear();
+		Vector3d center;
+		Vector3d color;
+		double size = 1;
+		double k_reflection = 0;
+		double k_refraction = 0;
+		double refraction_rate = 1;
+		double ambient = 0;
+		double diffuse = 0;
+		double specular = 0;
+
+		char name_board[100] = "C:\\Users\\SerCharles\\Desktop\\res\\board.ply";
+		size = 10.0 * sqrt(2);
+		center << 0, 0, 0;
+		color << 0.2, 0.2, 0.2;
+		k_reflection = 0.2;
+		k_refraction = 0;
+		refraction_rate = 1;
+		ambient = 0.6;
+		diffuse = 0.2;
+		specular = 0.2;
+		vector<TriangleMesh> board_mesh = ReadPLYMesh(name_board, size, center, color,
+			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
+		MeshModel board = MeshModel(board_mesh);
+		this->objects.push_back(board);
+
+		char name_bunny[100] = "C:\\Users\\SerCharles\\Desktop\\res\\bunny.ply";
+		size = 2;
+		center << 0, 4, 4;
+		color << 0.2, 0.2, 1;
+		k_reflection = 0.2;
+		k_refraction = 0.1;
+		refraction_rate = 1.4;
+		ambient = 0.6;
+		diffuse = 0.2;
+		specular = 0.2;
+		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name_bunny, size, center, color,
+			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
+		MeshModel bunny = MeshModel(bunny_mesh);
+		this->objects.push_back(bunny);
+
+		char name_dragon[100] = "C:\\Users\\SerCharles\\Desktop\\res\\dragon.ply";
+		size = 2;
+		center << -5, 5, -3;
+		color << 1, 0.2, 0.2;
+		k_reflection = 0.3;
+		k_refraction = 0.1;
+		refraction_rate = 1.6;
+		ambient = 0.6;
+		diffuse = 0.2;
+		specular = 0.2;
+		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name_dragon, size, center, color,
+			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
+		MeshModel dragon = MeshModel(dragon_mesh);
+		this->objects.push_back(dragon);
+
+		char name_happy[100] = "C:\\Users\\SerCharles\\Desktop\\res\\happy.ply";
+		size = 2;
+		center << 5, 4, -3;
+		color << 1, 1, 0.2;
+		k_reflection = 0.6;
+		k_refraction = 0.9;
+		refraction_rate = 1.8;
+		ambient = 0.6;
+		diffuse = 0.2;
+		specular = 0.2;
+		vector<TriangleMesh> happy_mesh = ReadPLYMesh(name_happy, size, center, color,
+			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
+		MeshModel happy = MeshModel(happy_mesh);
+		this->objects.push_back(happy);
+
+		int total_size = this->camera.height * this->camera.width;
+		this->results = new Vector3d[total_size];
 	}
 
 	/*
@@ -226,12 +313,8 @@ public:
 			{
 				Ray the_ray = GetPixelRay(this->camera, i, j);
 				Vector3d the_color = this->TraceOneRay(the_ray, 1);
+				this->results[j * this->camera.width + i] = the_color;
 			}
 		}
 	}
-
-
-
-
-
 };

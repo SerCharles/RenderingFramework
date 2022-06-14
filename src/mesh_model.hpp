@@ -27,12 +27,15 @@ public:
 	Vertex vertexs[3];
 	Vector3d normal;
 	int id = -1;
-	double k_reflection;
-	double k_refraction;
-	double refraction_rate;
+	double k_reflection = 0;
+	double k_refraction = 0;
+	double refraction_rate = 1.0;
+	double ambient = 0;
+	double diffuse = 0;
+	double specular = 0;
 	TriangleMesh() {}
 	TriangleMesh(int id, Vertex& vertex_a, Vertex& vertex_b, Vertex& vertex_c, 
-		double k_reflection, double k_refraction, double refraction_rate)
+		double k_reflection, double k_refraction, double refraction_rate, double ambient, double diffuse, double specular)
 	{
 		this->id = id;
 		this->vertexs[0] = vertex_a;
@@ -43,6 +46,9 @@ public:
 		this->k_reflection = k_reflection;
 		this->k_refraction = k_refraction;
 		this->refraction_rate = refraction_rate;
+		this->ambient = ambient;
+		this->diffuse = diffuse;
+		this->specular = specular;
 	}
 };
 
@@ -56,20 +62,23 @@ Args:
 	color [Vector3d]: [the color of the mesh model]
 	k_reflection [double]: [the reflection coefficient of the mesh model]
 	k_refraction [double]: [the refraction coefficient of the mesh model]
-	refraction_rate [double]: [the refraction rate of the mesh model
+	refraction_rate [double]: [the refraction rate of the mesh model]
+	ambient [double]: [the ambient weight of the mesh model]
+	diffuse [double]: [the diffuse weight of the mesh model]
+	specular [double]: [the specular weight of the mesh model]
 Returns:
 	faces [vector<TriangleMesh>]: [the faces]
 */
 vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, Vector3d color,
-	double k_reflection, double k_refraction, double refraction_rate)
+	double k_reflection, double k_refraction, double refraction_rate, double ambient, double diffuse, double specular)
 {
 	
 	vector<Vertex> vertexs;
 	vector<TriangleMesh> faces;
 	vertexs.clear();
 	faces.clear();
-	int vertex_num;
-	int face_num;
+	int vertex_num = 0;
+	int face_num = 0;
 
 	ifstream infile;
 	infile.open(filename, ios::in);
@@ -157,7 +166,7 @@ vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, V
 		infile >> n >> id_a >> id_b >> id_c;
 		
 		TriangleMesh new_face = TriangleMesh(i, vertexs[id_a], vertexs[id_b], vertexs[id_c],
-			k_reflection, k_refraction, refraction_rate);
+			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
 		faces.push_back(new_face);
 	}
 	vertexs.clear();
@@ -304,10 +313,10 @@ class MeshModel
 {
 public:
 	vector<TriangleMesh> faces;
-	OctNode* root;
-	double k_reflection;
-	double k_refraction;
-	double refraction_rate;
+	OctNode* root = NULL;
+	double k_reflection = 0;
+	double k_refraction = 0;
+	double refraction_rate = 1.0;
 
 	MeshModel() {}
 

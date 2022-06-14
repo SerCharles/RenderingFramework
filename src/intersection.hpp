@@ -133,7 +133,7 @@ bool JudgeIntersectionRayBoundingBox(Ray& ray, BoundingBox& bounding_box)
 		}
 	}
 
-	vector<float> t_list;
+	vector<double> t_list;
 	t_list.clear();
 	t_list.push_back(t_x_min);
 	t_list.push_back(t_x_max);
@@ -242,7 +242,7 @@ Ray GetReflectionRay(Ray& ray, TriangleMesh& face, double t)
 	Vector3d tangent_velocity = ray.direction - normal_velocity; //the tangent velocity of the ray, should not change
 	Vector3d new_direction = tangent_velocity - normal_velocity; //the new direction of the ray
 	new_direction = new_direction / new_direction.norm();
-	assert(normal_speed >= 0);
+	//assert(normal_speed >= 0);
 
 
 	double new_intensity = ray.intensity * face.k_reflection; //change the intensity
@@ -274,7 +274,7 @@ Ray GetRefractionRay(Ray& ray, TriangleMesh& face, double t)
 	Vector3d normal_velocity = -normal_direction * normal_speed; //the original normal velocity of the ray
 	Vector3d tangent_velocity = ray.direction - normal_velocity; //the original tangent velocity of the ray
 	double tangent_speed = tangent_velocity.norm(); //the original tangent speed of the ray
-	assert(normal_speed >= 0);
+	//assert(normal_speed >= 0);
 
 	//use law of refraction to get sin1, sin2, cos2
 	double n1 = ray.refraction_rate;
@@ -285,6 +285,13 @@ Ray GetRefractionRay(Ray& ray, TriangleMesh& face, double t)
 	}
 	double sin1 = tangent_speed;
 	double sin2 = sin1 * n1 / n2;
+	//Total internal reflection
+	if (sin2 >= 0.99)
+	{
+		Ray new_ray = ray;
+		new_ray.intensity = 0;
+		return new_ray;
+	}
 	double cos2 = sqrt(1 - sin2 * sin2);
 	
 

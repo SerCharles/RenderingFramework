@@ -10,9 +10,9 @@ class Ray
 public:
 	Vector3d start;
 	Vector3d direction;
-	double intensity;
-	double refraction_rate;
-	bool inside;
+	double intensity = 1.0;
+	double refraction_rate = 1.0;
+	bool inside = 0;
 	Ray() {}
 
 	/*
@@ -39,13 +39,13 @@ class Camera
 {
 public:
 	//the definition of the unit ball of the camera
-	double r;
-	double theta;
-	double phi;
-	const double min_r = 2;
-	const double max_r = 20;
-	const double min_theta = 10 / 180 * PI;
-	const double max_theta = 0.5 * PI;
+	double r = 0;
+	double theta = 0;
+	double phi = 0;
+	double min_r = 2;
+	double max_r = 20;
+	double min_theta = 10 / 180 * PI;
+	double max_theta = 0.5 * PI;
 	
 	//extrinsics
 	Matrix3d rotation;
@@ -53,12 +53,12 @@ public:
 	Vector3d look_center;
 
 	//intrinsics
-	int width;
-	int height;
-	double cx;
-	double cy;
-	double fx;
-	double fy;
+	int width = 0;
+	int height = 0;
+	double cx = 0;
+	double cy = 0;
+	double fx = 0;
+	double fy = 0;
 
 	Camera() {}
 
@@ -82,8 +82,28 @@ public:
 
 		//load extrinsics
 		this->r = r;
+		if (this->r < this->min_r)
+		{
+			this->r = this->min_r;
+		}
+		if (r > this->max_r)
+		{
+			this->r = this->max_r;
+		}
 		this->theta = theta;
+		if (this->theta < this->min_theta)
+		{
+			this->theta = this->min_theta;
+		}
+		if (this->theta > this->max_theta)
+		{
+			this->theta = this->max_theta;
+		}
 		this->phi = phi;
+		if (this->phi < 0 || this->phi >= 2 * PI)
+		{
+			this->phi = 0;
+		}
 		double x = r * cos(theta) * cos(phi);
 		double y = r * sin(theta);
 		double z = r * cos(theta) * sin(phi);

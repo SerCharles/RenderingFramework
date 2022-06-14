@@ -6,8 +6,84 @@
 
 #define MAX_LOADSTRING 100
 
-#include "basic.hpp"
+#include "utils.hpp"
+#include "mesh_model.hpp"
+#include "camera_model.hpp"
+#include "intersection.hpp"
+#include "light_model.hpp"
 
+Vector3d a[250000];
+void test_opencv()
+{
+
+    const char* intrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\intrinsic.txt";
+    const char* extrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\pose\\scene0000_01_0.txt";
+    const char* ply_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\ply\\scene0000_01_vh_clean_2.ply";
+    const char* save_name = "C:\\Users\\SerCharles\\Desktop\\result.png";
+    
+    int w = 500;
+    int h = 500;
+    for (int i = 0; i < h / 2; i++)
+    {
+        for (int j = 0; j < w / 2; j++)
+        {
+            a[i * w + j] << 0, 0, 0;
+        }
+    }
+    for (int i = 0; i < h / 2; i++)
+    {
+        for (int j = w / 2; j < w; j++)
+        {
+            a[i * w + j] << 1, 0, 0;
+        }
+    }
+    for (int i = h / 2; i < h; i++)
+    {
+        for (int j = 0; j < w / 2; j++)
+        {
+            a[i * w + j] << 0, 1, 0;
+        }
+    }
+    for (int i = h / 2; i < h; i++)
+    {
+        for (int j = w / 2; j < w; j++)
+        {
+            a[i * w + j] << 0, 0, 1;
+        }
+    }
+    SavePicture(a, save_name, w, h);
+
+}
+
+void test_matrix()
+{
+    double r = 10 * sqrt(2.0);
+    double theta = 45.0 / 180.0 * PI;
+    Camera camera = Camera(100, r, theta, 0);
+    Ray ray = GetPixelRay(camera, 50, 50);
+    ray.inside = 1;
+    ray.refraction_rate = sqrt(2);
+    Vector3d place1;
+    place1 << -2, 0, -2;
+    Vector3d place2;
+    place2 << 2, 0, -2;
+    Vector3d place3;
+    place3 << 0, 0, 2;
+    Vector3d norm;
+    norm << 0, -1, 0;
+    Vector3d color;
+    color << 1, 0, 0;
+    Vertex a = Vertex(0, place1, norm, color);
+    Vertex b = Vertex(1, place2, norm, color);
+    Vertex c = Vertex(2, place3, norm, color);
+    TriangleMesh f = TriangleMesh(0, a, b, c, 0.2, 0.2, sqrt(2), 0.6, 0.2, 0.2);
+    double t;
+    Vector3d fraction;
+    GetIntersectionRayMesh(ray, f, t, fraction);
+    Ray reflection_ray = GetReflectionRay(ray, f, t);
+    Ray refraction_ray = GetRefractionRay(ray, f, t);
+    int kebab = 0;
+}
 
 
 
@@ -21,6 +97,9 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+//Ray Tracing definition
+RayTracing main_model;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -45,22 +124,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     //TODO
-    const char* intrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\intrinsic.txt";
-    const char* extrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\pose\\scene0000_01_0.txt";
-    const char* ply_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\ply\\scene0000_01_vh_clean_2.ply";
+    main_model.Main();
     const char* save_name = "C:\\Users\\SerCharles\\Desktop\\result.png";
-    Vector3d a[10000];
-    int w = 80;
-    int h = 60;
-    for (int i = 0; i < h; i++)
-    {
-        for (int j = 0; j < w; j++)
-        {
-            a[i * w + j] << 0, 0, 1;
-        }
-    }
-    SavePicture(a, save_name, w, h);
-
+    SavePicture(main_model.results, save_name, main_model.camera.width, main_model.camera.height);
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RENDERINGFRAMEWORK));
 

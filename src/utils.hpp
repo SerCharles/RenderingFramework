@@ -14,30 +14,6 @@ using namespace std;
 using namespace Eigen;
 using namespace cv;
 
-//util functions
-/*
-Load an matrix file
-Returns:
-	matrix [double matrix], [4 * 4]: [the loaded extrinsic]
-*/
-Matrix4d LoadMatrix(const char* filename)
-{
-	Matrix4d matrix;
-	ifstream infile;
-	infile.open(filename, ios::in);
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			double x;
-			infile >> x;
-			matrix(i, j) = x;
-		}
-	}
-	infile.close();
-	return matrix;
-}
-
 /*
 Switch a string to int
 Args:
@@ -91,3 +67,4 @@ void SavePicture(Vector3d* data, const char* save_place, int width, int height)
 	}
 	imwrite(save_place, image);
 }
+
