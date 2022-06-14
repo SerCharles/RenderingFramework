@@ -115,13 +115,14 @@ public:
 		double x3 = cos(phi);
 		double y1 = -sin(theta) * cos(phi);
 		double y2 = cos(theta);
-		double y3 = -sin(theta) * cos(phi);
+		double y3 = -sin(theta) * sin(phi);
 		double z1 = -cos(theta) * cos(phi);
 		double z2 = -sin(theta);
 		double z3 = -cos(theta) * sin(phi);
 		this->rotation << x1, y1, z1,
 						  x2, y2, z2,
 						  x3, y3, z3; //不知道行列存储的对不对qaq
+
 	}
 };
 

@@ -141,6 +141,7 @@ vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, V
 		double error = dist.dot(dist);
 		square_error += error;
 	}
+	square_error = square_error / double(vertex_num);
 	double std_error = sqrt(square_error);
 	for (int i = 0; i < vertex_num; i++)
 	{
