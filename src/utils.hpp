@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <numbers>
+#include <assert.h>
 #include <Eigen\Dense>
 #include <opencv2/core/core.hpp> 
 #include <opencv2/highgui/highgui.hpp>  

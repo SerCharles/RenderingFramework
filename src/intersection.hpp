@@ -229,15 +229,25 @@ Returns:
 */
 Ray GetReflectionRay(Ray& ray, TriangleMesh& face, double t)
 {
+	Vector3d normal_direction = face.normal; //out normal direction
+	if (ray.inside == 1)
+	{
+		normal_direction = -face.normal; //in normal direction
+	}
+	//the normal direction must be opposite the ray direction
+
 	Vector3d intersection_point = ray.start + ray.direction * t; //the start is the intersection point
-	double normal_speed = -ray.direction.dot(face.normal); //the normal speed of the ray
-	Vector3d normal_velocity = -face.normal * normal_speed; //the original normal velocity of the ray, should reverse
+	double normal_speed = ray.direction.dot(-normal_direction); //the original normal speed of the ray
+	Vector3d normal_velocity = -normal_direction * normal_speed; //the original normal velocity of the ray, should reverse
 	Vector3d tangent_velocity = ray.direction - normal_velocity; //the tangent velocity of the ray, should not change
 	Vector3d new_direction = tangent_velocity - normal_velocity; //the new direction of the ray
+	new_direction = new_direction / new_direction.norm();
+	assert(normal_speed >= 0);
+
 
 	double new_intensity = ray.intensity * face.k_reflection; //change the intensity
 	double new_refraction_rate = ray.refraction_rate; //refraction rate should not change
-	Ray new_ray(intersection_point, new_direction, new_intensity, new_refraction_rate);
+	Ray new_ray(intersection_point, new_direction, new_intensity, new_refraction_rate, ray.inside);
 	return new_ray;
 }
 
@@ -250,29 +260,40 @@ Args:
 Returns:
 	new_ray [Ray]: [the new refraction ray]
 */
-Ray GetRefractionRay(Ray& ray, TriangleMesh& face, float t)
+Ray GetRefractionRay(Ray& ray, TriangleMesh& face, double t)
 {
+	Vector3d normal_direction = face.normal; //out normal direction
+	if (ray.inside == 1)
+	{
+		normal_direction = -face.normal; //in normal direction
+	}
+	//the normal direction must be opposite the ray direction
+
 	Vector3d intersection_point = ray.start + ray.direction * t; //the start is the intersection point
-	double normal_speed = -ray.direction.dot(face.normal); //the normal speed of the ray
-	Vector3d normal_velocity = -face.normal * normal_speed; //the original normal velocity of the ray, should reverse
-	Vector3d tangent_velocity = ray.direction - normal_velocity; //the tangent velocity of the ray, should not change
-	double tangent_speed = tangent_velocity.norm();
+	double normal_speed = ray.direction.dot(-normal_direction); //the original normal speed of the ray
+	Vector3d normal_velocity = -normal_direction * normal_speed; //the original normal velocity of the ray
+	Vector3d tangent_velocity = ray.direction - normal_velocity; //the original tangent velocity of the ray
+	double tangent_speed = tangent_velocity.norm(); //the original tangent speed of the ray
+	assert(normal_speed >= 0);
 
 	//use law of refraction to get sin1, sin2, cos2
 	double n1 = ray.refraction_rate;
 	double n2 = face.refraction_rate;
+	if (ray.inside == 1)
+	{
+		n2 = 1.0;
+	}
 	double sin1 = tangent_speed;
 	double sin2 = sin1 * n1 / n2;
 	double cos2 = sqrt(1 - sin2 * sin2);
 	
 
 	Vector3d tangent_direction = tangent_velocity / tangent_speed;
-	Vector3d normal_direction = -face.normal;
-	Vector3d new_velocity = tangent_direction * sin2 + normal_direction * cos2;
+	Vector3d new_velocity = tangent_direction * sin2 - normal_direction * cos2;
 	new_velocity = new_velocity / new_velocity.norm();
 
 	double new_intensity = ray.intensity * face.k_refraction; //change the intensity
 	double new_refraction_rate = face.refraction_rate; //change the refraction rate
-	Ray new_ray(intersection_point, new_velocity, new_intensity, new_refraction_rate);
+	Ray new_ray(intersection_point, new_velocity, new_intensity, new_refraction_rate, !ray.inside);
 	return new_ray;
 }

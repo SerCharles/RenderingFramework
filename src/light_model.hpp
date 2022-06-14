@@ -1,4 +1,9 @@
 #pragma once
+#include "utils.hpp"
+#include "mesh_model.hpp"
+#include "camera_model.hpp"
+#include "intersection.hpp"
+
 /*
 Definition of light and phong model
 */
@@ -9,141 +14,151 @@ public:
 	Vector3d diffuse;
 	Vector3d specular;
 	Vector3d direction;
+	Light() {}
 	Light()
 	{
 		ambient << 1.0, 1.0, 1.0;
 		diffuse << 1.0, 1.0, 1.0;
 		specular << 1.0, 1.0, 1.0;
-		direction << 0, 0, 1;
-	}
-
-	/*
-	Transform the light to the camera coordinate
-	Args:
-		camera [Camera]: [the camera]
-	*/
-	void CoordinateTransform(Camera& camera)
-	{
-		this->direction = camera.rotation * this->direction;
-	}
-
-	/*
-	Get the ambient light on a vertex of a triangle mesh
-	Args:
-		color [Vector3d]: [the color of the vertex to be lighted]
-	Returns:
-		ambient [Vector3d]: [the RGB result, between[0, 1)]
-	*/
-	Vector3d GetAmbient(Vector3d& color)
-	{
-		Vector3d ambient;
-		double r = color(0) * this->ambient(0);
-		double g = color(1) * this->ambient(1);
-		double b = color(2) * this->ambient(2);
-		ambient << r, g, b;
-		return ambient;
-	}
-
-	/*
-	Get the diffuse light on a vertex of a triangle mesh
-	Args:
-		color [Vector3d]: [the color of the vertex to be lighted]
-		norm [Vector3d]: [the norm of the vertex to be lighted]
-	Returns:
-		diffuse [Vector3d]: [the RGB result, between[0, 1)]
-	*/
-	Vector3d GetDiffuse(Vector3d& color, Vector3d& norm)
-	{
-		Vector3d diffuse;
-		Vector3d n = norm / norm.norm();
-		Vector3d l = this->direction / this->direction.norm();
-		double weight = n.dot(l);
-		if (weight <= 0)
-		{
-			weight = 0;
-		}
-		double r = color(0) * this->diffuse(0) * weight;
-		double g = color(1) * this->diffuse(1) * weight;
-		double b = color(2) * this->diffuse(2) * weight;
-		diffuse << r, g, b;
-		return diffuse;
-	}
-
-	/*
-	Get the specular light on a vertex of a triangle mesh
-	Args:
-		color [Vector3d]: [the color of the vertex to be lighted]
-		norm [Vector3d]: [the norm of the vertex to be lighted]
-		ray [Ray]: [the seeing direction]
-	Returns:
-		specular [Vector3d]: [the RGB result, between[0, 1)]
-	*/
-	Vector3d GetSpecular(Vector3d& color, Vector3d& norm, Ray& ray)
-	{
-		int p = 10;
-		Vector3d n = norm / norm.norm();
-		Vector3d l = this->direction / this->direction.norm();
-		Vector3d v = ray.direction / ray.direction.norm();
-		Vector3d r = n * n.dot(l) * 2 - l;
-		double rv = r.dot(v);
-		if (rv <= 0)
-		{
-			rv = 0;
-		}
-		double weight = 1;
-		for (int i = 1; i <= p; i++)
-		{
-			weight = weight * rv;
-		}
-		Vector3d specular;
-		double r = color(0) * this->specular(0) * weight;
-		double g = color(1) * this->specular(1) * weight;
-		double b = color(2) * this->specular(2) * weight;
-		specular << r, g, b;
-		return specular;
-	}
-
-	/*
-	Get the color of the intersection point of a mesh using the phong model
-	Args:
-		ray [Ray]: [the seeing direction]
-		face [TriangleMesh]: [the mesh to be lighted]
-		fraction [Vector3d]: [the fraction of the seeing point on the mesh]
-	Returns:
-		color [Vector3d]: [the result RGB color, between[0, 1)]
-	*/
-	Vector3d PhongModel(Ray& ray, TriangleMesh& face, Vector3d& fraction)
-	{
-		Vector3d color;
-		color << 0, 0, 0;
-		for (int i = 0; i < 3; i++)
-		{
-			Vector3d ambient = this->GetAmbient(face.colors[i]);
-			Vector3d diffuse = this->GetDiffuse(face.colors[i], face.normals[i]);
-			Vector3d specular = this->GetSpecular(face.colors[i], face.normals[i], ray);
-			Vector3d the_color = ambient + diffuse + specular;
-			color = color + the_color * fraction(i);
-		}
-		return color;
+		direction << 0, -1, 0;
 	}
 };
+
+/*
+Get the ambient light on a vertex
+Args:
+	light [Light]: [the light source]
+	ray [Ray]: [the looking ray]
+	vertex [Vertex]: [the vertex to be lighted]
+Returns:
+	ambient [Vector3d]: [the RGB result, between[0, 1)]
+*/
+Vector3d GetAmbient(Light& light, Ray& ray, Vertex& vertex)
+{
+	Vector3d ambient;
+	double r = vertex.color(0) * light.ambient(0);
+	double g = vertex.color(1) * light.ambient(1);
+	double b = vertex.color(2) * light.ambient(2);
+	ambient << r, g, b;
+	return ambient;
+}
+
+/*
+Get the diffuse light on a vertex of a triangle mesh
+Args:
+	light [Light]: [the light source]
+	ray [Ray]: [the looking ray]
+	vertex [Vertex]: [the vertex to be lighted]
+Returns:
+	diffuse [Vector3d]: [the RGB result, between[0, 1)]
+*/
+Vector3d GetDiffuse(Light& light, Ray& ray, Vertex& vertex)
+{
+	Vector3d diffuse;
+	Vector3d n = vertex.normal;
+	if (ray.inside == 1)
+	{
+		n = -vertex.normal;
+	}
+
+	Vector3d l = light.direction;
+	double weight = -n.dot(l);
+	if (weight <= 0)
+	{
+		weight = 0;
+	}
+	double r = vertex.color(0) * light.diffuse(0) * weight;
+	double g = vertex.color(1) * light.diffuse(1) * weight;
+	double b = vertex.color(2) * light.diffuse(2) * weight;
+	diffuse << r, g, b;
+	return diffuse;
+}
+
+/*
+Get the specular light on a vertex of a triangle mesh
+Args:
+	light [Light]: [the light source]
+	ray [Ray]: [the looking ray]
+	vertex [Vertex]: [the vertex to be lighted]
+Returns:
+	specular [Vector3d]: [the RGB result, between[0, 1)]
+*/
+Vector3d GetSpecular(Light& light, Ray& ray, Vertex& vertex)
+{
+	int p = 10;
+	Vector3d n = vertex.normal;
+	if (ray.inside == 1)
+	{
+		n = -vertex.normal;
+	}
+	Vector3d l = light.direction;
+	Vector3d v = ray.direction;
+	double normal_speed = l.dot(-n);
+	assert(normal_speed >= 0);
+	Vector3d normal_velocity = -n * normal_speed;
+	Vector3d tangent_velocity = l - normal_velocity;
+	Vector3d r = tangent_velocity - normal_velocity;
+
+	double rv = r.dot(-v);
+	if (rv <= 0)
+	{
+		rv = 0;
+	}
+	double weight = 1;
+	for (int i = 1; i <= p; i++)
+	{
+		weight = weight * rv;
+	}
+
+	Vector3d specular;
+	double r = vertex.color(0) * light.specular(0) * weight;
+	double g = vertex.color(1) * light.specular(1) * weight;
+	double b = vertex.color(2) * light.specular(2) * weight;
+	specular << r, g, b;
+	return specular;
+}
+
+/*
+Get the color of the intersection point of a mesh using the phong model
+Args:
+	light [Light]: [the light source]
+	ray [Ray]: [the seeing direction]
+	face [TriangleMesh]: [the mesh to be lighted]
+	fraction [Vector3d]: [the fraction of the seeing point on the mesh]
+Returns:
+	color [Vector3d]: [the result RGB color, between[0, 1)]
+*/
+Vector3d PhongModel(Light& light, Ray& ray, TriangleMesh& face, Vector3d& fraction)
+{
+	Vector3d color;
+	color << 0, 0, 0;
+	for (int i = 0; i < 3; i++)
+	{
+		Vector3d ambient = GetAmbient(light, ray, face.vertexs[0]);
+		Vector3d diffuse = GetDiffuse(light, ray, face.vertexs[0]);
+		Vector3d specular = GetSpecular(light, ray, face.vertexs[0]);
+		Vector3d the_color = ambient + diffuse + specular;
+		color = color + the_color * fraction(i);
+	}
+	color = color * ray.intensity;
+	return color;
+}
+
+
 
 //the main class of ray tracing
 class RayTracing
 {
 public:
-	vector<ObjectModel> objects;
+	vector<MeshModel> objects;
 	Camera camera;
 	Light light;
 	const double threshold = 0.01;
 	const int max_depth = 6;
 
-	RayTracing() {}
-	RayTracing(vector<ObjectModel>& objects, Camera& camera, Light& light)
+	RayTracing()
 	{
-		this->objects = objects;
-		this->camera = camera;
-		this->light = light;
+		//TODO
 	}
 
 	/*
@@ -173,8 +188,8 @@ public:
 			double t;
 			int mesh_id;
 			Vector3d fraction;
-			this->objects[i].GetIntersection(ray, mesh_id, t, fraction);
-			if (t > 0 || t < best_t)
+			GetIntersectionRayMeshModel(ray, this->objects[i], mesh_id, t, fraction);
+			if (t > 0 && t < best_t)
 			{
 				best_t = t;
 				best_mesh_id = mesh_id;
@@ -189,14 +204,14 @@ public:
 
 		//get the refraction and reflections, recursively get the results
 		TriangleMesh final_mesh = this->objects[best_i].faces[best_mesh_id];
-		color = this->light.PhongModel(ray, final_mesh, best_fraction);
+		color = PhongModel(this->light, ray, final_mesh, best_fraction);
 		double k_reflection = this->objects[best_i].k_reflection;
 		double k_refraction = this->objects[best_i].k_refraction;
-		Ray reflection = this->objects[best_i].GetReflection(ray, best_mesh_id, best_t);
-		Ray refraction = this->objects[best_i].GetRefraction(ray, best_mesh_id, best_t);
+		Ray reflection = GetReflectionRay(ray, final_mesh, best_t);
+		Ray refraction = GetRefractionRay(ray, final_mesh, best_t);
 		Vector3d color_reflection = this->TraceOneRay(reflection, depth + 1);
 		Vector3d color_refraction = this->TraceOneRay(refraction, depth + 1);
-		color = color + color_reflection * k_reflection + color_refraction * k_refraction;
+		color = color + color_reflection + color_refraction;
 		return color;
 	}
 
@@ -205,7 +220,14 @@ public:
 	*/
 	void Main()
 	{
-
+		for (int i = 0; i < this->camera.width; i++)
+		{
+			for (int j = 0; j < this->camera.height; j++)
+			{
+				Ray the_ray = GetPixelRay(this->camera, i, j);
+				Vector3d the_color = this->TraceOneRay(the_ray, 1);
+			}
+		}
 	}
 
 

@@ -1,10 +1,9 @@
 //definition of the camera model and rays
 #pragma once
-#include <math.h>
-#define _USE_MATH_DEFINES
 #include "utils.hpp"
 using namespace std;
 using namespace Eigen;
+#define PI 3.1415926535
 
 class Ray
 {
@@ -13,6 +12,7 @@ public:
 	Vector3d direction;
 	double intensity;
 	double refraction_rate;
+	bool inside;
 	Ray() {}
 
 	/*
@@ -22,13 +22,15 @@ public:
 		direction [Vector3d]: [the direction of the ray]
 		intensity [double]: [the intensity of the ray]
 		refraction [double]: [the refraction rate of the current ray]
+		inside [bool]: [whether the ray is inside a mesh model or not]
 	*/
-	Ray(Vector3d start, Vector3d direction, double intensity, double refraction)
+	Ray(Vector3d start, Vector3d direction, double intensity, double refraction, bool inside)
 	{
 		this->start = start;
 		this->direction = direction;
 		this->intensity = intensity;
 		this->refraction_rate = refraction;
+		this->inside = inside;
 	}
 };
 
@@ -42,8 +44,8 @@ public:
 	double phi;
 	const double min_r = 2;
 	const double max_r = 20;
-	const double min_theta = 10 / 180 * M_PI;
-	const double max_theta = 0.5 * M_PI;
+	const double min_theta = 10 / 180 * PI;
+	const double max_theta = 0.5 * PI;
 	
 	//extrinsics
 	Matrix3d rotation;
@@ -57,6 +59,7 @@ public:
 	double cy;
 	double fx;
 	double fy;
+
 	Camera() {}
 
 	/*
@@ -124,6 +127,6 @@ Ray GetPixelRay(Camera& camera, int u, int v)
 	direction = direction / direction.norm();
 	direction = camera.rotation * direction;
 
-	Ray new_ray = Ray(start, direction, 1.0, 1.0);
+	Ray new_ray = Ray(start, direction, 1.0, 1.0, 0);
 	return new_ray;
 }

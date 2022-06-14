@@ -309,6 +309,8 @@ public:
 	double k_refraction;
 	double refraction_rate;
 
+	MeshModel() {}
+
 	MeshModel(vector<TriangleMesh>& faces)
 	{
 		this->faces = faces;
