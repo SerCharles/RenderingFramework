@@ -300,7 +300,7 @@ public:
 
 
 //The bounding box and octtree of an object
-class ObjectModel
+class MeshModel
 {
 public:
 	vector<TriangleMesh> faces;
@@ -309,7 +309,7 @@ public:
 	double k_refraction;
 	double refraction_rate;
 
-	ObjectModel(vector<TriangleMesh>& faces)
+	MeshModel(vector<TriangleMesh>& faces)
 	{
 		this->faces = faces;
 		BoundingBox bounding_box = this->BuildBoundingBox();
@@ -362,7 +362,7 @@ public:
 				}
 			}
 		}
-		BoundingBox bounding_box(min_x, min_y, min_z, max_x, max_y, max_z);
+		BoundingBox bounding_box = BoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
 		return bounding_box;
 	}
 };

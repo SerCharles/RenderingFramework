@@ -98,7 +98,7 @@ public:
 		double z3 = -cos(theta) * sin(phi);
 		this->rotation << x1, y1, z1,
 						  x2, y2, z2,
-						  x3, y3, z3; 
+						  x3, y3, z3; //不知道行列存储的对不对qaq
 	}
 };
 

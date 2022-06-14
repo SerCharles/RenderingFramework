@@ -1,6 +1,8 @@
 //the computer geometry functions, mainly in getting the intersections between points
 #pragma once
-
+#include "utils.hpp"
+#include "mesh_model.hpp"
+#include "camera_model.hpp"
 
 /*
 Judge whether a 2D point is inside a 2D rectangle
@@ -31,18 +33,18 @@ bool JudgePointInsideRectangle(double p_x, double p_y, double min_x, double min_
 /*
 Get the intersection point between a triangle mesh and a ray, using the Moller-Trumbore Algorithm
 Args:
-	face [TriangleMesh]: [the mesh to be intersected]
 	ray [Ray]: [the ray to be intersected]
+	face [TriangleMesh]: [the mesh to be intersected]
 	t [double]: [the intersecting t of the ray, -1 if empty]
 	fraction [Vector3d]: [the fraction of the intersection point to the mesh, used in getting the final color]
 */
-void GetIntersectionMesh(TriangleMesh& face, Ray& ray, double& t, Vector3d& fraction)
+void GetIntersectionRayMesh(Ray& ray, TriangleMesh& face, double& t, Vector3d& fraction)
 {
 	Vector3d o = ray.start;
 	Vector3d d = ray.direction;
-	Vector3d p0 = face.vertexs[0];
-	Vector3d p1 = face.vertexs[1];
-	Vector3d p2 = face.vertexs[2];
+	Vector3d p0 = face.vertexs[0].point;
+	Vector3d p1 = face.vertexs[1].point;
+	Vector3d p2 = face.vertexs[2].point;
 	Vector3d e1 = p1 - p0;
 	Vector3d e2 = p2 - p0;
 	Vector3d s = o - p0;
@@ -67,28 +69,29 @@ void GetIntersectionMesh(TriangleMesh& face, Ray& ray, double& t, Vector3d& frac
 }
 
 /*
-Judge whether a ray intersects with the oct node
+Judge whether a ray intersects with a bounding box
 Args:
-	ray [Ray]: [the ray]
+	ray [Ray]: [the ray to be intersected]
+	bounding_box [BoundingBox]: [the bounding box to be intersected]
 Returns:
 	result [bool]: [whether intersect or not]
 */
-bool JudgeIntersection(Ray& ray)
+bool JudgeIntersectionRayBoundingBox(Ray& ray, BoundingBox& bounding_box)
 {
 	double t_x_min = -1, t_x_max = -1, t_y_min = -1, t_y_max = -1, t_z_min = -1, t_z_max = -1;
 	if (ray.direction(0) != 0)
 	{
-		t_x_min = (this->bounding_box.min_x - ray.start(0)) / ray.direction(0);
-		t_x_max = (this->bounding_box.max_x - ray.start(0)) / ray.direction(0);
+		t_x_min = (bounding_box.min_x - ray.start(0)) / ray.direction(0);
+		t_x_max = (bounding_box.max_x - ray.start(0)) / ray.direction(0);
 		Vector3d p_x_min = ray.start + ray.direction * t_x_min;
 		Vector3d p_x_max = ray.start + ray.direction * t_x_max;
 		if (t_x_min <= 0 ||
-			JudgePointInsideRectangle(p_x_min(1), p_x_min(2), this->bounding_box.min_y, this->bounding_box.min_z, this->bounding_box.max_y, this->bounding_box.max_z) == 0)
+			JudgePointInsideRectangle(p_x_min(1), p_x_min(2), bounding_box.min_y, bounding_box.min_z, bounding_box.max_y, bounding_box.max_z) == 0)
 		{
 			t_x_min = -1;
 		}
 		if (t_x_max <= 0 ||
-			JudgePointInsideRectangle(p_x_max(1), p_x_max(2), this->bounding_box.min_y, this->bounding_box.min_z, this->bounding_box.max_y, this->bounding_box.max_z) == 0)
+			JudgePointInsideRectangle(p_x_max(1), p_x_max(2), bounding_box.min_y, bounding_box.min_z, bounding_box.max_y, bounding_box.max_z) == 0)
 		{
 			t_x_max = -1;
 		}
@@ -96,17 +99,17 @@ bool JudgeIntersection(Ray& ray)
 
 	if (ray.direction(1) != 0)
 	{
-		t_y_min = (this->bounding_box.min_y - ray.start(1)) / ray.direction(1);
-		t_y_max = (this->bounding_box.max_y - ray.start(1)) / ray.direction(1);
+		t_y_min = (bounding_box.min_y - ray.start(1)) / ray.direction(1);
+		t_y_max = (bounding_box.max_y - ray.start(1)) / ray.direction(1);
 		Vector3d p_y_min = ray.start + ray.direction * t_y_min;
 		Vector3d p_y_max = ray.start + ray.direction * t_y_max;
 		if (t_y_min <= 0 ||
-			JudgePointInsideRectangle(p_y_min(0), p_y_min(2), this->bounding_box.min_x, this->bounding_box.min_z, this->bounding_box.max_x, this->bounding_box.max_z) == 0)
+			JudgePointInsideRectangle(p_y_min(0), p_y_min(2), bounding_box.min_x, bounding_box.min_z, bounding_box.max_x,bounding_box.max_z) == 0)
 		{
 			t_y_min = -1;
 		}
 		if (t_y_max <= 0 ||
-			JudgePointInsideRectangle(p_y_max(0), p_y_max(2), this->bounding_box.min_x, this->bounding_box.min_z, this->bounding_box.max_x, this->bounding_box.max_z) == 0)
+			JudgePointInsideRectangle(p_y_max(0), p_y_max(2), bounding_box.min_x, bounding_box.min_z, bounding_box.max_x, bounding_box.max_z) == 0)
 		{
 			t_y_max = -1;
 		}
@@ -114,17 +117,17 @@ bool JudgeIntersection(Ray& ray)
 
 	if (ray.direction(2) != 0)
 	{
-		t_z_min = (this->bounding_box.min_z - ray.start(2)) / ray.direction(2);
-		t_z_max = (this->bounding_box.max_z - ray.start(2)) / ray.direction(2);
+		t_z_min = (bounding_box.min_z - ray.start(2)) / ray.direction(2);
+		t_z_max = (bounding_box.max_z - ray.start(2)) / ray.direction(2);
 		Vector3d p_z_min = ray.start + ray.direction * t_z_min;
 		Vector3d p_z_max = ray.start + ray.direction * t_z_max;
 		if (t_z_min <= 0 ||
-			JudgePointInsideRectangle(p_z_min(0), p_z_min(1), this->bounding_box.min_x, this->bounding_box.min_y, this->bounding_box.max_x, this->bounding_box.max_y) == 0)
+			JudgePointInsideRectangle(p_z_min(0), p_z_min(1), bounding_box.min_x, bounding_box.min_y, bounding_box.max_x, bounding_box.max_y) == 0)
 		{
 			t_z_min = -1;
 		}
 		if (t_z_max <= 0 ||
-			JudgePointInsideRectangle(p_z_max(0), p_z_max(1), this->bounding_box.min_x, this->bounding_box.min_y, this->bounding_box.max_x, this->bounding_box.max_y) == 0)
+			JudgePointInsideRectangle(p_z_max(0), p_z_max(1), bounding_box.min_x, bounding_box.min_y, bounding_box.max_x, bounding_box.max_y) == 0)
 		{
 			t_z_max = -1;
 		}
@@ -151,63 +154,65 @@ bool JudgeIntersection(Ray& ray)
 }
 
 /*
-Get all possible mesh that intersects with the ray recursively
+Get all the possible intersection meshes of an octree node and a ray, recursive function
 Args:
-	mesh_list [vector<TriangleMesh>]: [the possible intersecting mesh to be judged]
-	ray [Ray]: [the ray to be judged]
+	ray [Ray]: [the ray to be intersected]
+	oct_node [OctNode*]: [the octreee node to be intersected]
+	intersection_mesh_list [vector<TriangleMesh>]: [the possible intersecting mesh to be judged]
 */
-void GetPossibleMesh(vector<TriangleMesh>& mesh_list, Ray& ray)
+void GetAllIntersectionRayOctNode( Ray& ray, OctNode* oct_node, vector<TriangleMesh>& intersection_mesh_list)
 {
-	bool intersect = this->JudgeIntersection(ray);
+	bool intersect = JudgeIntersectionRayBoundingBox(ray, oct_node->bounding_box);
 	if (intersect == 0)
 	{
 		return;
 	}
-	if (this->sons[0] != NULL)
+	if (oct_node->sons[0] != NULL)
 	{
 		for (int i = 0; i < 8; i++)
 		{
-			this->sons[i]->GetPossibleMesh(mesh_list, ray);
+			GetAllIntersectionRayOctNode(ray, oct_node->sons[i], intersection_mesh_list);
 		}
 	}
 	else
 	{
-		for (int i = 0; i < this->faces.size(); i++)
+		for (int i = 0; i < oct_node->faces.size(); i++)
 		{
-			mesh_list.push_back(this->faces[i]);
+			intersection_mesh_list.push_back(oct_node->faces[i]);
 		}
 	}
 }
 
 
 /*
-Get the intersection point of a ray with the mesh model
+Get the intersection point of a ray with a mesh model
 Args:
-	ray [Ray]: [the ray to intersect]
-	i [int]: [the id of the first intersection mesh in the object model, -1 if nothing]
+	ray [Ray]: [the ray to be intersected]
+	mesh_model [MeshModel]: [the mesh model to be intersected]
+	id [int]: [the id of the first intersection mesh in the object model, -1 if nothing]
 	t [double]: [the t of the ray to be traveled, -1 if nothing]
 	fraction [Vector3d]: [the fraction of the intersection point to the mesh, used in getting the final color]
 */
-void GetIntersection(Ray& ray, int& i, double& t, Vector3d& fraction)
+void GetIntersectionRayMeshModel(Ray& ray, MeshModel& mesh_model, int& id, double& t, Vector3d& fraction)
 {
-	vector<TriangleMesh> mesh_list;
-	mesh_list.clear();
-	this->root->GetPossibleMesh(mesh_list, ray);
+	vector<TriangleMesh> all_intersection_mesh_list;
+	all_intersection_mesh_list.clear();
+	GetAllIntersectionRayOctNode(ray, mesh_model.root, all_intersection_mesh_list);
 	t = DBL_MAX;
-	i = -1;
-	for (int i = 0; i < mesh_list.size(); i++)
+	id = -1;
+	for (int i = 0; i < all_intersection_mesh_list.size(); i++)
 	{
 		double the_t = -1;
 		Vector3d the_fraction;
-		GetIntersectionMesh(mesh_list[i], ray, the_t, the_fraction);
+		GetIntersectionRayMesh(ray, all_intersection_mesh_list[i], the_t, the_fraction);
 		if (the_t > 0 && the_t < t)
 		{
 			t = the_t;
-			i = mesh_list[i].id;
+			id = all_intersection_mesh_list[i].id;
 			fraction = the_fraction;
 		}
 	}
-	if (i == -1)
+	if (id == -1)
 	{
 		t = -1;
 	}
@@ -216,52 +221,58 @@ void GetIntersection(Ray& ray, int& i, double& t, Vector3d& fraction)
 /*
 Get the reflection ray after getting intersection
 Args:
-	ray [Ray]: [the ray to intersect]
-	i [int]: [the id of the first intersection mesh in the object model]
+	ray [Ray]: [the ray to be intersected]
+	face [TriangleMesh]: [the face to be intersected]
 	t [double]: [the t of the ray to be traveled]
 Returns:
 	new_ray [Ray]: [the new reflection ray]
 */
-Ray GetReflection(Ray& ray, int i, double t)
+Ray GetReflectionRay(Ray& ray, TriangleMesh& face, double t)
 {
-	Vector3d intersection_point = ray.start + ray.direction * t;
-	double dist = sqrt(ray.direction.dot(this->faces[i].normal));
-	Vector3d normal_speed = this->faces[i].normal * dist;
-	Vector3d tangent_speed = ray.direction - normal_speed;
-	Vector3d new_direction = tangent_speed - normal_speed;
-	double k = this->k_reflection;
-	double new_intensity = ray.intensity * k;
-	Ray new_ray(intersection_point, new_direction, new_intensity, this->refraction_rate);
+	Vector3d intersection_point = ray.start + ray.direction * t; //the start is the intersection point
+	double normal_speed = -ray.direction.dot(face.normal); //the normal speed of the ray
+	Vector3d normal_velocity = -face.normal * normal_speed; //the original normal velocity of the ray, should reverse
+	Vector3d tangent_velocity = ray.direction - normal_velocity; //the tangent velocity of the ray, should not change
+	Vector3d new_direction = tangent_velocity - normal_velocity; //the new direction of the ray
+
+	double new_intensity = ray.intensity * face.k_reflection; //change the intensity
+	double new_refraction_rate = ray.refraction_rate; //refraction rate should not change
+	Ray new_ray(intersection_point, new_direction, new_intensity, new_refraction_rate);
 	return new_ray;
 }
 
 /*
 Get the refraction ray after getting intersection
 Args:
-	ray [Ray]: [the ray to intersect]
-	i [int]: [the id of the first intersection mesh in the object model]
+	ray [Ray]: [the ray to be intersected]
+	face [TriangleMesh]: [the face to be intersected]
 	t [double]: [the t of the ray to be traveled]
 Returns:
 	new_ray [Ray]: [the new refraction ray]
 */
-Ray GetRefraction(Ray& ray, int i, float t)
+Ray GetRefractionRay(Ray& ray, TriangleMesh& face, float t)
 {
-	Vector3d intersection_point = ray.start + ray.direction * t;
+	Vector3d intersection_point = ray.start + ray.direction * t; //the start is the intersection point
+	double normal_speed = -ray.direction.dot(face.normal); //the normal speed of the ray
+	Vector3d normal_velocity = -face.normal * normal_speed; //the original normal velocity of the ray, should reverse
+	Vector3d tangent_velocity = ray.direction - normal_velocity; //the tangent velocity of the ray, should not change
+	double tangent_speed = tangent_velocity.norm();
 
-	double dist = sqrt(ray.direction.dot(this->faces[i].normal));
-	Vector3d normal_speed = this->faces[i].normal * dist;
-	Vector3d tangent_speed = ray.direction - normal_speed;
-
-	double x = tangent_speed.norm();
-	double y = normal_speed.norm();
+	//use law of refraction to get sin1, sin2, cos2
 	double n1 = ray.refraction_rate;
-	double n2 = this->refraction_rate;
-	double kx = n2 * y / sqrt(n1 * n1 * (x * x + y * y) - n2 * n2 * x * x);
-	Vector3d new_speed = normal_speed + tangent_speed * kx;
-	new_speed = new_speed / new_speed.norm();
-	double k = this->k_refraction;
-	double new_intensity = ray.intensity * k;
+	double n2 = face.refraction_rate;
+	double sin1 = tangent_speed;
+	double sin2 = sin1 * n1 / n2;
+	double cos2 = sqrt(1 - sin2 * sin2);
+	
 
-	Ray new_ray(intersection_point, new_speed, new_intensity, n2);
+	Vector3d tangent_direction = tangent_velocity / tangent_speed;
+	Vector3d normal_direction = -face.normal;
+	Vector3d new_velocity = tangent_direction * sin2 + normal_direction * cos2;
+	new_velocity = new_velocity / new_velocity.norm();
+
+	double new_intensity = ray.intensity * face.k_refraction; //change the intensity
+	double new_refraction_rate = face.refraction_rate; //change the refraction rate
+	Ray new_ray(intersection_point, new_velocity, new_intensity, new_refraction_rate);
 	return new_ray;
 }
