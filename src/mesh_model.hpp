@@ -16,7 +16,7 @@ public:
 	{
 		this->id = id;
 		this->point = point;
-		this->normal = normal;
+		this->normal = normal / normal.norm();
 		this->color = color;
 	}
 };

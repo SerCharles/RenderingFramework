@@ -91,7 +91,7 @@ Vector3d GetSpecular(Light& light, Ray& ray, Vertex& vertex)
 	Vector3d l = light.direction;
 	Vector3d v = ray.direction;
 	double normal_speed = l.dot(-n);
-	assert(normal_speed >= 0);
+	//assert(normal_speed >= 0);
 	Vector3d normal_velocity = -n * normal_speed;
 	Vector3d tangent_velocity = l - normal_velocity;
 	Vector3d r = tangent_velocity - normal_velocity;
@@ -167,7 +167,7 @@ public:
 		light_direction << 0, -1.0, 0;
 		this->light = Light(light_color, light_direction);
 
-		int picture_size = 500;
+		int picture_size = 300;
 		double r = 10 * sqrt(2.0);
 		double theta = 45.0 / 180.0 * PI;
 		double phi = 0;
@@ -180,9 +180,9 @@ public:
 		double k_reflection = 0;
 		double k_refraction = 0;
 		double refraction_rate = 1;
-		double ambient = 0.6;
-		double diffuse = 0;
-		double specular = 0;
+		double ambient = 0.4;
+		double diffuse = 0.1;
+		double specular = 0.1;
 
 		
 		char name_board[100] = "C:\\Users\\SerCharles\\Desktop\\res\\board.ply";
@@ -201,7 +201,7 @@ public:
 		this->objects.push_back(board);
 		
 
-		char name_bunny[100] = "C:\\Users\\SerCharles\\Desktop\\res\\bunny.ply";
+		char name[100] = "C:\\Users\\SerCharles\\Desktop\\res\\bunny.ply";
 		size = 2;
 		center << 0, 4, 4;
 		color << 0.2, 0.2, 1;
@@ -211,12 +211,12 @@ public:
 		//ambient = 0.6;
 		//diffuse = 0.2;
 		//specular = 0.2;
-		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name_bunny, size, center, color,
+		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name, size, center, color,
 			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
 		MeshModel bunny = MeshModel(bunny_mesh);
 		this->objects.push_back(bunny);
 
-		char name_dragon[100] = "C:\\Users\\SerCharles\\Desktop\\res\\dragon.ply";
+		
 		size = 2;
 		center << -5, 5, -3;
 		color << 1, 0.2, 0.2;
@@ -226,12 +226,11 @@ public:
 		//ambient = 0.6;
 		//diffuse = 0.2;
 		//specular = 0.2;
-		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name_dragon, size, center, color,
+		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name, size, center, color,
 			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
 		MeshModel dragon = MeshModel(dragon_mesh);
 		this->objects.push_back(dragon);
 
-		char name_happy[100] = "C:\\Users\\SerCharles\\Desktop\\res\\happy.ply";
 		size = 2;
 		center << 5, 4, -3;
 		color << 1, 1, 0.2;
@@ -241,11 +240,11 @@ public:
 		//ambient = 0.6;
 		//diffuse = 0.2;
 		//specular = 0.2;
-		vector<TriangleMesh> happy_mesh = ReadPLYMesh(name_happy, size, center, color,
+		vector<TriangleMesh> happy_mesh = ReadPLYMesh(name, size, center, color,
 			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
 		MeshModel happy = MeshModel(happy_mesh);
 		this->objects.push_back(happy);
-
+		
 		int total_size = this->camera.height * this->camera.width;
 		this->results = new Vector3d[total_size];
 	}
@@ -291,6 +290,7 @@ public:
 			return color;
 		}
 
+
 		
 		//get the refraction and reflections, recursively get the results
 		TriangleMesh final_mesh = this->objects[best_i].faces[best_mesh_id];
@@ -300,9 +300,9 @@ public:
 		Ray reflection = GetReflectionRay(ray, final_mesh, best_t);
 		Ray refraction = GetRefractionRay(ray, final_mesh, best_t);
 		Vector3d color_reflection = this->TraceOneRay(reflection, depth + 1);
-		//Vector3d color_refraction = this->TraceOneRay(refraction, depth + 1);
-		//color = color + color_reflection + color_refraction;
-		color = color + color_reflection;
+		Vector3d color_refraction = this->TraceOneRay(refraction, depth + 1);
+		color = color + color_reflection + color_refraction;
+		//color = color + color_reflection;
 		return color;
 		
 	}
@@ -312,6 +312,8 @@ public:
 	*/
 	void Main()
 	{
+		clock_t start, end;
+		start = clock();
 		for (int i = 0; i < this->camera.width; i++)
 		{
 			for (int j = 0; j < this->camera.height; j++)
@@ -325,14 +327,16 @@ public:
 				out << j << endl;
 				out.close();
 				*/
-				if (i == 46 && j == 454)
-				{
-					int kebab = 0;
-				}
 				
 				Vector3d the_color = this->TraceOneRay(the_ray, 1);
 				this->results[j * this->camera.width + i] = the_color;
 			}
 		}
+		end = clock();
+		double time_cost = double(end - start) / CLOCKS_PER_SEC;
+		ofstream out;
+		out.open("C:\\Users\\SerCharles\\Desktop\\log.txt");
+		out << time_cost;
+		out.close();
 	}
 };

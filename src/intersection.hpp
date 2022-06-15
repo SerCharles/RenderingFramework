@@ -242,7 +242,7 @@ Ray GetReflectionRay(Ray& ray, TriangleMesh& face, double t)
 	Vector3d tangent_velocity = ray.direction - normal_velocity; //the tangent velocity of the ray, should not change
 	Vector3d new_direction = tangent_velocity - normal_velocity; //the new direction of the ray
 	new_direction = new_direction / new_direction.norm();
-	assert(normal_speed >= 0);
+	//assert(normal_speed >= 0);
 
 
 	double new_intensity = ray.intensity * face.k_reflection; //change the intensity
@@ -274,7 +274,7 @@ Ray GetRefractionRay(Ray& ray, TriangleMesh& face, double t)
 	Vector3d normal_velocity = -normal_direction * normal_speed; //the original normal velocity of the ray
 	Vector3d tangent_velocity = ray.direction - normal_velocity; //the original tangent velocity of the ray
 	double tangent_speed = tangent_velocity.norm(); //the original tangent speed of the ray
-	assert(normal_speed >= 0);
+	//assert(normal_speed >= 0);
 
 	//use law of refraction to get sin1, sin2, cos2
 	double n1 = ray.refraction_rate;

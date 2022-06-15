@@ -10,6 +10,7 @@
 #include <Eigen\Dense>
 #include <opencv2/core/core.hpp> 
 #include <opencv2/highgui/highgui.hpp>  
+#include <time.h>
 using namespace std;
 using namespace Eigen;
 using namespace cv;
@@ -45,13 +46,13 @@ Args:
 void SavePicture(Vector3d* data, const char* save_place, int width, int height)
 {
 	Mat image = Mat::zeros(Size(width, height), CV_8UC3);
-	for (int i = 0; i < height; i++)
+	for (int j = 0; j < height; j++)
 	{
-		for (int j = 0; j < width; j++)
+		for (int i = 0; i < width; i++)
 		{
 			for (int k = 0; k < 3; k++)
 			{
-				int color = int(data[i * width + j](k) * 256);
+				int color = int(data[j * width + i](k) * 256);
 				if (color >= 256)
 				{
 					color = 255;
@@ -68,3 +69,53 @@ void SavePicture(Vector3d* data, const char* save_place, int width, int height)
 	imwrite(save_place, image);
 }
 
+/*
+Use the Win32 API to show the picture
+Args:
+	data [array of Vector3d], [H * W]: [the result data]
+	width [int]: [the width of the picture]
+	height [int]: [the height of the picture]
+	hdc [HDC]: [the HWND used in painting]
+*/
+void ShowPicture(Vector3d* data, int width, int height, HDC& hdc)
+{
+	for (int j = 0; j < height; j++)
+	{
+		for (int i = 0; i < width; i++)
+		{
+			Vector3d color = data[j * width + i];
+			int r = int(color(0) * 256);
+			if (r > 255)
+			{
+				r = 255;
+			}
+			if (r < 0)
+			{
+				r = 0;
+			}
+
+			int g = int(color(1) * 256);
+			if (g > 255)
+			{
+				g = 255;
+			}
+			if (g < 0)
+			{
+				g = 0;
+			}
+
+			int b = int(color(2) * 256);
+			if (b > 255)
+			{
+				b = 255;
+			}
+			if (b < 0)
+			{
+				b = 0;
+			}
+
+			COLORREF rgb = RGB(r, g, b);
+			SetPixel(hdc, i, j, rgb);
+		}
+	}
+}

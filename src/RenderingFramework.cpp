@@ -1,7 +1,4 @@
-﻿// RenderingFramework.cpp : 定义应用程序的入口点。
-//
-
-#include "framework.h"
+﻿#include "framework.h"
 #include "RenderingFramework.h"
 
 #define MAX_LOADSTRING 100
@@ -12,87 +9,10 @@
 #include "intersection.hpp"
 #include "light_model.hpp"
 
-Vector3d a[250000];
-void test_opencv()
-{
 
-    const char* intrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\intrinsic.txt";
-    const char* extrinsic_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\pose\\scene0000_01_0.txt";
-    const char* ply_name = "G:\\dataset\\scannet\\scans\\scene0000_01\\ply\\scene0000_01_vh_clean_2.ply";
-    const char* save_name = "C:\\Users\\SerCharles\\Desktop\\result.png";
-    
-    int w = 500;
-    int h = 500;
-    for (int i = 0; i < h / 2; i++)
-    {
-        for (int j = 0; j < w / 2; j++)
-        {
-            a[i * w + j] << 0, 0, 0;
-        }
-    }
-    for (int i = 0; i < h / 2; i++)
-    {
-        for (int j = w / 2; j < w; j++)
-        {
-            a[i * w + j] << 1, 0, 0;
-        }
-    }
-    for (int i = h / 2; i < h; i++)
-    {
-        for (int j = 0; j < w / 2; j++)
-        {
-            a[i * w + j] << 0, 1, 0;
-        }
-    }
-    for (int i = h / 2; i < h; i++)
-    {
-        for (int j = w / 2; j < w; j++)
-        {
-            a[i * w + j] << 0, 0, 1;
-        }
-    }
-    SavePicture(a, save_name, w, h);
-
-}
-
-void test_matrix()
-{
-    double r = 10 * sqrt(2.0);
-    double theta = 45.0 / 180.0 * PI;
-    Camera camera = Camera(100, r, theta, 0);
-    Ray ray = GetPixelRay(camera, 50, 50);
-    ray.inside = 1;
-    ray.refraction_rate = sqrt(2);
-    Vector3d place1;
-    place1 << -2, 0, -2;
-    Vector3d place2;
-    place2 << 2, 0, -2;
-    Vector3d place3;
-    place3 << 0, 0, 2;
-    Vector3d norm;
-    norm << 0, -1, 0;
-    Vector3d color;
-    color << 1, 0, 0;
-    Vertex a = Vertex(0, place1, norm, color);
-    Vertex b = Vertex(1, place2, norm, color);
-    Vertex c = Vertex(2, place3, norm, color);
-    TriangleMesh f = TriangleMesh(0, a, b, c, 0.2, 0.2, sqrt(2), 0.6, 0.2, 0.2);
-    double t;
-    Vector3d fraction;
-    GetIntersectionRayMesh(ray, f, t, fraction);
-    Ray reflection_ray = GetReflectionRay(ray, f, t);
-    Ray refraction_ray = GetRefractionRay(ray, f, t);
-    int kebab = 0;
-}
-
-
-
-// 全局变量:
 HINSTANCE hInst;                                // 当前实例
 WCHAR szTitle[MAX_LOADSTRING];                  // 标题栏文本
 WCHAR szWindowClass[MAX_LOADSTRING];            // 主窗口类名
-
-// 此代码模块中包含的函数的前向声明:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -112,21 +32,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-    // 初始化全局字符串
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_RENDERINGFRAMEWORK, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
-    // 执行应用程序初始化:
     if (!InitInstance (hInstance, nCmdShow))
     {
         return FALSE;
     }
 
-    //TODO
-    main_model.Main();
-    const char* save_name = "C:\\Users\\SerCharles\\Desktop\\result.png";
-    SavePicture(main_model.results, save_name, main_model.camera.width, main_model.camera.height);
+
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_RENDERINGFRAMEWORK));
 
@@ -147,11 +62,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-//
-//  函数: MyRegisterClass()
-//
-//  目标: 注册窗口类。
-//
+
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
     WNDCLASSEXW wcex;
@@ -173,22 +84,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
-//
-//   函数: InitInstance(HINSTANCE, int)
-//
-//   目标: 保存实例句柄并创建主窗口
-//
-//   注释:
-//
-//        在此函数中，我们在全局变量中保存实例句柄并
-//        创建和显示主程序窗口。
-//
+
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // 将实例句柄存储在全局变量中
-
+   hInst = hInstance; 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+       CW_USEDEFAULT, 0, main_model.camera.width + 15, main_model.camera.height + 58, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -201,16 +102,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-//
-//  函数: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  目标: 处理主窗口的消息。
-//
-//  WM_COMMAND  - 处理应用程序菜单
-//  WM_PAINT    - 绘制主窗口
-//  WM_DESTROY  - 发送退出消息并返回
-//
-//
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -218,7 +110,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
-            // 分析菜单选择:
             switch (wmId)
             {
             case IDM_ABOUT:
@@ -232,12 +123,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_LBUTTONDOWN: {
+        HDC hdc = GetDC(hWnd);
+        int x = LOWORD(lParam);
+        int y = HIWORD(lParam);
+        main_model.camera.MouseDown(x, y);
+        ReleaseDC(hWnd, hdc);
+        break;
+    }
+    case WM_RBUTTONDOWN: {
+        HDC hdc = GetDC(hWnd);
+        int x = LOWORD(lParam);
+        int y = HIWORD(lParam);
+        main_model.camera.MouseDown(x, y);
+        ReleaseDC(hWnd, hdc);
+        break;
+    }
+    case WM_LBUTTONUP: {
+        main_model.camera.MouseUp();
+        InvalidateRect(hWnd, NULL, true);
+        break;
+    }
+    case WM_RBUTTONUP: {
+        main_model.camera.MouseUp();
+        InvalidateRect(hWnd, NULL, true);
+        break;
+    }
+    case WM_MOUSEMOVE: {
+        HDC hdc = GetDC(hWnd);
+        int x = LOWORD(lParam);
+        int y = HIWORD(lParam);
+        main_model.camera.MouseMove(x, y);
+        ReleaseDC(hWnd, hdc);
+        break;
+    }
+    case WM_MOUSEWHEEL: {
+        HDC hdc = GetDC(hWnd);
+        main_model.camera.MouseWheel((short)HIWORD(wParam));
+        InvalidateRect(hWnd, NULL, TRUE);
+        ReleaseDC(hWnd, hdc);
+        break;
+    }
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 在此处添加使用 hdc 的任何绘图代码...
+            main_model.Main();
+            ShowPicture(main_model.results, main_model.camera.width, main_model.camera.height, hdc);
             EndPaint(hWnd, &ps);
+            Sleep(20);
         }
         break;
     case WM_DESTROY:
@@ -249,7 +184,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-// “关于”框的消息处理程序。
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
