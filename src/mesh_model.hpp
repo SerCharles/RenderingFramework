@@ -29,13 +29,12 @@ public:
 	int id = -1;
 	double k_reflection = 0;
 	double k_refraction = 0;
-	double refraction_rate = 1.0;
 	double ambient = 0;
 	double diffuse = 0;
 	double specular = 0;
 	TriangleMesh() {}
 	TriangleMesh(int id, Vertex& vertex_a, Vertex& vertex_b, Vertex& vertex_c, 
-		double k_reflection, double k_refraction, double refraction_rate, double ambient, double diffuse, double specular)
+		double k_reflection, double k_refraction, double ambient, double diffuse, double specular)
 	{
 		this->id = id;
 		this->vertexs[0] = vertex_a;
@@ -45,7 +44,6 @@ public:
 		this->normal = this->normal / this->normal.norm();
 		this->k_reflection = k_reflection;
 		this->k_refraction = k_refraction;
-		this->refraction_rate = refraction_rate;
 		this->ambient = ambient;
 		this->diffuse = diffuse;
 		this->specular = specular;
@@ -70,7 +68,7 @@ Returns:
 	faces [vector<TriangleMesh>]: [the faces]
 */
 vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, Vector3d color,
-	double k_reflection, double k_refraction, double refraction_rate, double ambient, double diffuse, double specular)
+	double k_reflection, double k_refraction, double ambient, double diffuse, double specular)
 {
 	
 	vector<Vertex> vertexs;
@@ -167,7 +165,7 @@ vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, V
 		infile >> n >> id_a >> id_b >> id_c;
 		
 		TriangleMesh new_face = TriangleMesh(i, vertexs[id_a], vertexs[id_b], vertexs[id_c],
-			k_reflection, k_refraction, refraction_rate, ambient, diffuse, specular);
+			k_reflection, k_refraction, ambient, diffuse, specular);
 		faces.push_back(new_face);
 	}
 	vertexs.clear();

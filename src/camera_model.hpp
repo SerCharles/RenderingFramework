@@ -4,6 +4,10 @@
 using namespace std;
 using namespace Eigen;
 #define PI 3.1415926535
+#define TYPE_INIT 0 //init ray
+#define TYPE_LOCAL 1 //ray used to generate shadow
+#define TYPE_REFLECTION 2 //reflection ray
+#define TYPE_REFRACTION 3 //refraction ray
 
 class Ray
 {
@@ -11,8 +15,8 @@ public:
 	Vector3d start;
 	Vector3d direction;
 	double intensity = 1.0;
-	double refraction_rate = 1.0;
-	bool inside = 0;
+	int type = TYPE_INIT;
+	int last_object_id = -1; //the id to not judge
 	Ray() {}
 
 	/*
@@ -21,20 +25,19 @@ public:
 		start [Vector3d]: [the start point of the ray]
 		direction [Vector3d]: [the direction of the ray]
 		intensity [double]: [the intensity of the ray]
-		refraction [double]: [the refraction rate of the current ray]
-		inside [bool]: [whether the ray is inside a mesh model or not]
+		type [int]: [the type of the ray]
+		last_object_id [int]: [the last object id to not be judged]
 	*/
-	Ray(Vector3d start, Vector3d direction, double intensity, double refraction, bool inside)
+	Ray(Vector3d start, Vector3d direction, double intensity, int type, int last_object_id)
 	{
 		this->start = start;
 		this->direction = direction;
 		this->intensity = intensity;
-		this->refraction_rate = refraction;
-		this->inside = inside;
+		this->type = type;
+		this->last_object_id = last_object_id;
 	}
 };
 
-//TODO: rotation and translation
 class Camera
 {
 public:
@@ -238,6 +241,6 @@ Ray GetPixelRay(Camera& camera, int u, int v)
 	direction << x, y, z;
 	direction = direction / direction.norm();
 	direction = camera.rotation * direction;
-	Ray new_ray = Ray(start, direction, 1.0, 1.0, 0);
+	Ray new_ray = Ray(start, direction, 1.0, TYPE_INIT, -1);
 	return new_ray;
 }
