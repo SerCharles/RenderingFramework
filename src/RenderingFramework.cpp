@@ -164,17 +164,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ReleaseDC(hWnd, hdc);
         break;
     }
-
-    case WM_PAINT:
+    case WM_KEYUP: {
+        HDC hdc = GetDC(hWnd);
+        Vector3d move_direction_camera;
+        move_direction_camera << 0, 0, 0;
+        bool flush = 0;
+        switch (wParam)
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            main_model.Main();
-            ShowPicture(main_model.results, main_model.camera.width, main_model.camera.height, hdc);
-            EndPaint(hWnd, &ps);
-            Sleep(20);
+            case VK_LEFT: {
+                move_direction_camera << -1, 0, 0;
+                flush = 1;
+                break;
+            }
+            case VK_RIGHT: {
+                move_direction_camera << 1, 0, 0;
+                flush = 1;
+                break;
+            }
+            case VK_UP: {
+                move_direction_camera << 0, 0, 1;
+                flush = 1;
+                break;
+            }
+            case VK_DOWN: {
+                move_direction_camera << 0, 0, -1;
+                flush = 1;
+                break;
+            }
         }
+        if (flush)
+        {
+            main_model.camera.KeyUp(move_direction_camera);
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+        ReleaseDC(hWnd, hdc);
         break;
+    }
+    case WM_PAINT:{
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
+        main_model.Main();
+        ShowPicture(main_model.results, main_model.camera.width, main_model.camera.height, hdc);
+        EndPaint(hWnd, &ps);
+        break;
+    }
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

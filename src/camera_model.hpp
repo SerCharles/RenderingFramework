@@ -51,14 +51,15 @@ public:
 	double speed_r = 1;
 	double speed_theta = 0.002;
 	double speed_phi = 0.002;
+	double speed_translation = 1;
 	int last_mouse_x = -1; //used in handling mousemove
 	int last_mouse_y = -1; //used in handling mousemove
 	bool mouse_down = 0; //used in handling mousemove
-	//int wheel_place = 0; //used in handling wheel place
-
+	
 	
 	//extrinsics
 	Matrix3d rotation;
+	Vector3d translation;
 	Vector3d camera_position;
 
 	//intrinsics
@@ -93,6 +94,7 @@ public:
 		this->r = r;
 		this->theta = theta;
 		this->phi = phi;
+		this->translation << 0, 0, 0;
 		this->ResetCameraPlace();
 
 
@@ -131,6 +133,7 @@ public:
 		double y = r * sin(theta);
 		double z = r * cos(theta) * sin(phi);
 		this->camera_position << x, y, z;
+		this->camera_position += this->translation;
 
 		double x1 = -sin(phi);
 		double x2 = 0;
@@ -197,6 +200,19 @@ public:
 	{
 		double dr = -double(wheel_information / 120) * this->speed_r;
 		this->r = this->r + dr;
+		this->ResetCameraPlace();
+	}
+
+	/*
+	Handling key event, used in translation
+	Args:
+		move_direction_camera [Vector3d]: [the moving direction of camera in the camera coordinate]
+	*/
+	void KeyUp(Vector3d move_direction_camera)
+	{
+		move_direction_camera = move_direction_camera * speed_translation;
+		Vector3d move_direction_world = this->rotation * move_direction_camera;
+		this->translation += move_direction_world;
 		this->ResetCameraPlace();
 	}
 };
