@@ -223,6 +223,10 @@ public:
 		MeshModel dragon = MeshModel(dragon_mesh);
 		this->objects.push_back(dragon);
 
+		char name_object[100] = "C:\\Users\\SerCharles\\Desktop\\res\\shiba.obj";
+		ReadOBJMesh(name_object, size, center, k_reflection, k_refraction);
+
+
 		/*
 		size = 2;
 		center << 0, 8, -3;

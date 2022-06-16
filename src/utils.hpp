@@ -1,6 +1,7 @@
 //The utility functions used in the project
 #pragma once
 #include <string>
+#include <map>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>

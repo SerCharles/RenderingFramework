@@ -3,7 +3,6 @@
 #include "utils.hpp"
 using namespace std;
 using namespace Eigen;
-using namespace cv;
 
 class Vertex
 {
@@ -47,30 +46,6 @@ public:
 		this->k_refraction = k_refraction;
 	}
 };
-
-/*
-Texture Mapping function
-Args:
-	filename [char*]: [the full filename of the texture file]
-	pixels [vector<Vector2d>]: [all the 2D pixel coordinates]
-Returns:
-	textures [vector<Vector3d>]: [the RGB color of all corresponding pixels in the texture picture]
-*/
-vector<Vector3d> TextureMapping(char* filename, vector<Vector2d>& pixels)
-{
-	vector<Vector3d> textures;
-	textures.clear();
-	Mat image = imread(filename);
-	for (int i = 0; i < pixels.size(); i++)
-	{
-		double x_exact = pixels[i](0);
-		double y_exact = pixels[i](1);
-
-	}
-
-	return textures;
-}
-
 
 /*
 Read a ply mesh model
@@ -436,10 +411,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 		mtl_infos.push_back(current_mtl);
 	}
 
-	//read all the textures
-
-
-
+	
 
 	//clear and return
 	points.clear();
