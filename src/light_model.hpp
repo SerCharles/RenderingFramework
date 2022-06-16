@@ -180,7 +180,7 @@ public:
 		size = 10 * sqrt(2);
 		center << 0, 0, 0;
 		color << 0.4, 0.4, 0.4;
-		k_reflection = 0.2;
+		k_reflection = 0.5;
 		k_refraction = 0;
 		ambient = 0.6;
 		diffuse = 0.2;
@@ -210,12 +210,22 @@ public:
 		size = 2;
 		center << 5, 4, 2;
 		color << 0.2, 0.2, 0.2;
-		k_reflection = 0;
+		k_reflection = 0.2;
 		k_refraction = 0.6;
 		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name_cube, size, center, color,
 			k_reflection, k_refraction, ambient, diffuse, specular);
 		MeshModel dragon = MeshModel(dragon_mesh);
 		this->objects.push_back(dragon);
+
+		size = 2;
+		center << 0, 8, -3;
+		color << 0.2, 0.2, 0.2;
+		k_reflection = 0.2;
+		k_refraction = 0.6;
+		vector<TriangleMesh> kebab_mesh = ReadPLYMesh(name_cube, size, center, color,
+			k_reflection, k_refraction, ambient, diffuse, specular);
+		MeshModel kebab = MeshModel(kebab_mesh);
+		this->objects.push_back(kebab);
 		
 		int total_size = this->camera.height * this->camera.width;
 		this->results = new Vector3d[total_size];
@@ -239,6 +249,31 @@ public:
 			return color;
 		}
 
+		//local ray need special judge, judge all the objects
+		if (ray.type == TYPE_LOCAL)
+		{
+			color << 1, 1, 1;
+			color = color * ray.intensity;
+			for (int i = 0; i < this->objects.size(); i++)
+			{
+				if (i == ray.last_object_id)
+				{
+					continue;
+				}
+				double t;
+				int mesh_id;
+				Vector3d fraction;
+				GetIntersectionRayMeshModel(ray, this->objects[i], mesh_id, t, fraction);
+				if (t > 0)
+				{
+					color = color * this->objects[i].faces[mesh_id].k_refraction;
+				}
+			}
+			return color;
+		}
+
+
+
 		//get intersection results with all the models
 		double best_t = DBL_MAX;
 		int best_mesh_id = -1;
@@ -254,7 +289,7 @@ public:
 			int mesh_id;
 			Vector3d fraction;
 			GetIntersectionRayMeshModel(ray, this->objects[i], mesh_id, t, fraction);
-			if (t > 1e-3 && t < best_t)
+			if (t > 0 && t < best_t)
 			{
 				best_t = t;
 				best_mesh_id = mesh_id;
@@ -263,44 +298,27 @@ public:
 			}
 		}
 
-		//judge result according to the type of the ray
-		if (ray.type == TYPE_LOCAL)
-		{
-			if (best_i < 0)
-			{
-				color << 1, 1, 1;
-			}
-			else
-			{
-				color << 0, 0, 0;
-			}
-			return color;
-		}
-		else
-		{
-			//generate ray tree, recursively get results
-			if (best_i < 0)
-			{
-				return color;
-			}
-			TriangleMesh final_mesh = this->objects[best_i].faces[best_mesh_id];
-			Vector3d color_phong = PhongModel(this->light, ray, final_mesh, best_fraction);
-			double k_reflection = this->objects[best_i].k_reflection;
-			double k_refraction = this->objects[best_i].k_refraction; 
-			Ray local = GetLocalRay(ray, this->light.direction, best_t, best_i);
-			Ray reflection = GetReflectionRay(ray, final_mesh, best_t, best_i);
-			Ray refraction = GetRefractionRay(ray, final_mesh, best_t, best_i);
-			Vector3d color_local = this->TraceOneRay(local, depth);
-			Vector3d color_reflection = this->TraceOneRay(reflection, depth + 1);
-			Vector3d color_refraction = this->TraceOneRay(refraction, depth + 1);
-			color(0) = color_phong(0) * color_local(0);
-			color(1) = color_phong(1) * color_local(1);
-			color(2) = color_phong(2) * color_local(2);
-			color = color + color_reflection + color_refraction;
-			return color;
-		}
 
-		
+		//generate ray tree, recursively get results
+		if (best_i < 0)
+		{
+			return color;
+		}
+		TriangleMesh final_mesh = this->objects[best_i].faces[best_mesh_id];
+		Vector3d color_phong = PhongModel(this->light, ray, final_mesh, best_fraction);
+		double k_reflection = final_mesh.k_reflection;
+		double k_refraction = final_mesh.k_refraction;
+		Ray local = GetLocalRay(ray, this->light.direction, best_t, best_i);
+		Ray reflection = GetReflectionRay(ray, final_mesh, best_t, best_i);
+		Ray refraction = GetRefractionRay(ray, final_mesh, best_t, best_i);
+		Vector3d color_local = this->TraceOneRay(local, depth);
+		Vector3d color_reflection = this->TraceOneRay(reflection, depth + 1);
+		Vector3d color_refraction = this->TraceOneRay(refraction, depth + 1);
+		color(0) = color_phong(0) * color_local(0);
+		color(1) = color_phong(1) * color_local(1);
+		color(2) = color_phong(2) * color_local(2);
+		color = color + color_reflection + color_refraction;
+		return color;
 	}
 
 	/*

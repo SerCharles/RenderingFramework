@@ -313,9 +313,6 @@ class MeshModel
 public:
 	vector<TriangleMesh> faces;
 	OctNode* root = NULL;
-	double k_reflection = 0;
-	double k_refraction = 0;
-	double refraction_rate = 1.0;
 
 	MeshModel() {}
 
