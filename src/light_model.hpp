@@ -130,8 +130,7 @@ Vector3d PhongModel(Light& light, Ray& ray, TriangleMesh& face, Vector3d& fracti
 		Vector3d ambient = GetAmbient(light, ray, face.vertexs[0]);
 		Vector3d diffuse = GetDiffuse(light, ray, face.vertexs[0]);
 		Vector3d specular = GetSpecular(light, ray, face.vertexs[0]);
-		//Vector3d the_color = ambient + diffuse + specular;
-		Vector3d the_color = ambient;
+		Vector3d the_color = ambient + diffuse + specular;
 		color = color + the_color * fraction(i);
 	}
 	color = color * ray.intensity;
@@ -148,7 +147,7 @@ public:
 	Camera camera;
 	Light light;
 	const double threshold = 0.01;
-	const int max_depth = 1;
+	const int max_depth = 3;
 	Vector3d* results;
 
 	~RayTracing()
@@ -169,8 +168,8 @@ public:
 		this->light = Light(light_direction, light_ambient, light_diffuse, light_specular);
 
 		int picture_size = 300;
-		double r = 10 * sqrt(2.0);
-		double theta = 90.0 / 180.0 * PI;
+		double r = 5 * sqrt(2.0);
+		double theta = 135.0 / 180.0 * PI;
 		double phi = 0;
 		this->camera = Camera(picture_size, r, theta, phi);
 
@@ -183,74 +182,45 @@ public:
 		double k_reflection = 0;
 		double k_refraction = 0;
 		
-		char name_board[100] = "C:\\Users\\SerCharles\\Desktop\\res\\board.ply";
-		size = 5 * sqrt(2);
+		
+		char name_board[100] = "res\\board.ply";
+		size = 20 * sqrt(2);
 		center << 0, 0, 0;
 		ambient << 0.2, 0.2, 0.2;
 		diffuse << 0.4, 0.4, 0.4;
 		specular << 0.1, 0.1, 0.1;
-		k_reflection = 0.5;
+		k_reflection = 0.4;
 		k_refraction = 0;
 		vector<TriangleMesh> board_mesh = ReadPLYMesh(name_board, size, center, ambient, diffuse, specular,
 			k_reflection, k_refraction);
 		MeshModel board = MeshModel(board_mesh);
 		this->objects.push_back(board);
 		
-		
-		char name_bunny[100] = "C:\\Users\\SerCharles\\Desktop\\res\\shiba.ply";
-		size = 2;
-		center << 0, 3, 0;
-		ambient << 0.7, 0.7, 0.2;
-		diffuse << 0.2, 0.2, 0.2;
-		//diffuse << 0.7, 0.7, 0.1;
-		specular << 0.1, 0.1, 0.1;
-		k_reflection = 0;
-		k_refraction = 0;
-		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name_bunny, size, center, ambient, diffuse, specular,
-			k_reflection, k_refraction);
-		MeshModel bunny = MeshModel(bunny_mesh);
-		this->objects.push_back(bunny);
-		
-		/*
-		char name_bunny[100] = "C:\\Users\\SerCharles\\Desktop\\res\\shiba.obj";
-		size = 2;
-		center << 0, 3, 0;
-		k_reflection = 0;
-		k_refraction = 0;
-		vector<TriangleMesh> bunny_mesh = ReadOBJMesh(name_bunny, size, center, k_reflection, k_refraction);
-		MeshModel bunny = MeshModel(bunny_mesh);
-		this->objects.push_back(bunny);
-		*/
 
+		char name_shiba[100] = "res\\shiba.obj";
+		size = 2;
+		center << 0, 3, 0;
+		k_reflection = 0;
+		k_refraction = 0;
+		vector<TriangleMesh> shiba_mesh = ReadOBJMesh(name_shiba, size, center, k_reflection, k_refraction);
+		MeshModel shiba = MeshModel(shiba_mesh);
+		this->objects.push_back(shiba);
 		
-		char name_cube[100] = "C:\\Users\\SerCharles\\Desktop\\res\\cube.ply";
+		
+		char name_cube[100] = "res\\cube.ply";
 		size = 2;
 		center << 5, 4, 2;
 		ambient << 0.2, 0.2, 0.2;
 		diffuse << 0.2, 0.2, 0.2;
 		specular << 0.1, 0.1, 0.1;		
-		k_reflection = 0.2;
+		k_reflection = 0.1;
 		k_refraction = 0.6;
-		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name_cube, size, center, ambient, diffuse, specular,
+		vector<TriangleMesh> cube_mesh = ReadPLYMesh(name_cube, size, center, ambient, diffuse, specular,
 			k_reflection, k_refraction);
-		MeshModel dragon = MeshModel(dragon_mesh);
-		this->objects.push_back(dragon);
+		MeshModel cube = MeshModel(cube_mesh);
+		this->objects.push_back(cube);
 		
 
-
-		/*
-		size = 2;
-		center << 0, 8, -3;
-		ambient << 0.2, 0.2, 0.2;
-		diffuse << 0.2, 0.2, 0.2;
-		specular << 0.1, 0.1, 0.1;			
-		k_reflection = 0.2;
-		k_refraction = 0.6;
-		vector<TriangleMesh> kebab_mesh = ReadPLYMesh(name_cube, size, center, ambient, diffuse, specular,
-			k_reflection, k_refraction);
-		MeshModel kebab = MeshModel(kebab_mesh);
-		this->objects.push_back(kebab);
-		*/
 		int total_size = this->camera.height * this->camera.width;
 		this->results = new Vector3d[total_size];
 		
@@ -277,7 +247,6 @@ public:
 		if (ray.type == TYPE_LOCAL)
 		{
 			color << 1, 1, 1;
-			/*
 			color = color * ray.intensity;
 			for (int i = 0; i < this->objects.size(); i++)
 			{
@@ -293,7 +262,7 @@ public:
 				{
 					color = color * this->objects[i].faces[mesh_id].k_refraction;
 				}
-			}*/
+			}
 			return color;
 		}
 
@@ -357,10 +326,6 @@ public:
 		{
 			for (int j = 0; j < this->camera.height; j++)
 			{
-				if (i == 150 && j == 150)
-				{
-					int kebab = 0;
-				}
 				Ray the_ray = GetPixelRay(this->camera, i, j);
 				Vector3d the_color = this->TraceOneRay(the_ray, 1);
 				this->results[j * this->camera.width + i] = the_color;

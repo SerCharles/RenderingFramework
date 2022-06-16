@@ -48,33 +48,27 @@ public:
 	}
 };
 
+
+Mat image;
 /*
 Texture Mapping function
 Args:
-	filename [char*]: [the full filename of the texture file]
+	filename [string]: [the full filename of the texture file]
 	pixels [vector<Vector2d>]: [all the 2D pixel coordinates]
 Returns:
 	textures [vector<Vector3d>]: [the RGB color of all corresponding pixels in the texture picture]
 */
-vector<Vector3d> TextureMapping(char* filename, vector<Vector2d>& pixels)
+vector<Vector3d> TextureMapping(string filename, vector<Vector2d>& pixels)
 {
 	vector<Vector3d> textures;
 	textures.clear();
-	Mat image = imread(filename);
+	image = imread(filename);
 	int width = image.rows;
 	int height = image.cols;
 	for (int i = 0; i < pixels.size(); i++)
 	{
 		double x_exact = pixels[i](0) * double(width) - 1;
-		double y_exact = (1 - pixels[i](1)) * double(height) - 1;
-		int x = round(x_exact);
-		int y = round(y_exact);
-		Vector3d result;
-		for (int k = 0; k < 3; k++)
-		{
-			result(k) = double(image.at<Vec3b>(y, x)[2 - k]) / 256.0;
-		}
-		/*
+		double y_exact = pixels[i](1) * double(height) - 1;
 		if (x_exact <= 0.5)
 		{
 			x_exact = 0.51;
@@ -110,7 +104,7 @@ vector<Vector3d> TextureMapping(char* filename, vector<Vector2d>& pixels)
 			double color = color_down * (1 - rate_y) + color_up * rate_y;
 			result(k) = color;
 		}
-		*/
+		
 		textures.push_back(result);
 	}
 	return textures;
@@ -131,7 +125,7 @@ Args:
 Returns:
 	faces [vector<TriangleMesh>]: [the faces]
 */
-vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, 
+vector<TriangleMesh> ReadPLYMesh(string filename, double size, Vector3d center,
 	Vector3d& ambient, Vector3d& diffuse, Vector3d& specular, double k_reflection, double k_refraction)
 {
 	
@@ -249,7 +243,7 @@ Args:
 Returns:
 	faces [vector<TriangleMesh>]: [the faces]
 */
-vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, double k_reflection, double k_refraction)
+vector<TriangleMesh> ReadOBJMesh(string filename, double size, Vector3d center, double k_reflection, double k_refraction)
 {
 	//store the information of faces
 	struct FaceInfo
@@ -375,7 +369,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 			double px, py;
 			obj_file >> px >> py;
 			Vector2d pixel;
-			pixel << px, py;
+			pixel << px, 1 - py;
 			pixels.push_back(pixel);
 		}
 		else if (head == f)
@@ -423,9 +417,9 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 
 
 	//read mtl
-	//TODO: 文件系统转换
 	ifstream mtl_file;
-	mtl_file.open("C:\\Users\\SerCharles\\Desktop\\res\\shiba.mtl");
+	string mtl_filename = "res\\" + mtl_path;
+	mtl_file.open(mtl_filename);
 	string current_name = "";
 	while (mtl_file.peek() != EOF)
 	{
@@ -509,7 +503,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 	}
 	for (int i = 0; i < texture_names.size(); i++)
 	{
-		char texture_path[100] = "C:\\Users\\SerCharles\\Desktop\\res\\shiba.png";
+		string texture_path = "res\\" + texture_names[i];
 		textures[texture_names[i]] = TextureMapping(texture_path, pixels);
 	}
 	texture_names.clear();

@@ -44,7 +44,7 @@ Args:
 	width [int]: [the width of the picture]
 	height [int]: [the height of the picture]
 */
-void SavePicture(Vector3d* data, const char* save_place, int width, int height)
+void SavePicture(Vector3d* data, string save_place, int width, int height)
 {
 	Mat image = Mat::zeros(Size(width, height), CV_8UC3);
 	for (int j = 0; j < height; j++)
