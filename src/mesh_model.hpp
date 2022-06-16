@@ -8,16 +8,20 @@ class Vertex
 {
 public:
 	Vector3d point;
-	Vector3d color;
 	Vector3d normal;
+	Vector3d ambient;
+	Vector3d diffuse;
+	Vector3d specular;
 	int id = -1;
 	Vertex() {}
-	Vertex(int id, Vector3d point, Vector3d normal, Vector3d color)
+	Vertex(int id, Vector3d point, Vector3d normal, Vector3d ambient, Vector3d diffuse, Vector3d specular)
 	{
 		this->id = id;
 		this->point = point;
 		this->normal = normal / normal.norm();
-		this->color = color;
+		this->ambient = ambient;
+		this->diffuse = diffuse;
+		this->specular = specular;
 	}
 };
 
@@ -29,12 +33,8 @@ public:
 	int id = -1;
 	double k_reflection = 0;
 	double k_refraction = 0;
-	double ambient = 0;
-	double diffuse = 0;
-	double specular = 0;
 	TriangleMesh() {}
-	TriangleMesh(int id, Vertex& vertex_a, Vertex& vertex_b, Vertex& vertex_c, 
-		double k_reflection, double k_refraction, double ambient, double diffuse, double specular)
+	TriangleMesh(int id, Vertex& vertex_a, Vertex& vertex_b, Vertex& vertex_c, double k_reflection, double k_refraction)
 	{
 		this->id = id;
 		this->vertexs[0] = vertex_a;
@@ -44,31 +44,25 @@ public:
 		this->normal = this->normal / this->normal.norm();
 		this->k_reflection = k_reflection;
 		this->k_refraction = k_refraction;
-		this->ambient = ambient;
-		this->diffuse = diffuse;
-		this->specular = specular;
 	}
 };
 
-//TODO:OBJMESH and texture
 /*
 Read a ply mesh model
 Args:
 	filename [char*]: [the filename]
 	size [double]: [the new size of the mesh model]
 	center [Vector3d]: [the new center of the mesh model]
-	color [Vector3d]: [the color of the mesh model]
+	ambient [Vector3d]: [the ambient weight of the mesh model]
+	diffuse [Vector3d]: [the diffuse weight of the mesh model]
+	specular [Vector3d]: [the specular weight of the mesh model]
 	k_reflection [double]: [the reflection coefficient of the mesh model]
 	k_refraction [double]: [the refraction coefficient of the mesh model]
-	refraction_rate [double]: [the refraction rate of the mesh model]
-	ambient [double]: [the ambient weight of the mesh model]
-	diffuse [double]: [the diffuse weight of the mesh model]
-	specular [double]: [the specular weight of the mesh model]
 Returns:
 	faces [vector<TriangleMesh>]: [the faces]
 */
-vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, Vector3d color,
-	double k_reflection, double k_refraction, double ambient, double diffuse, double specular)
+vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, 
+	Vector3d& ambient, Vector3d& diffuse, Vector3d& specular, double k_reflection, double k_refraction)
 {
 	
 	vector<Vertex> vertexs;
@@ -154,7 +148,7 @@ vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, V
 	//store the vertexs
 	for (int i = 0; i < vertex_num; i++)
 	{
-		Vertex new_vertex = Vertex(i, points[i], normals[i], color);
+		Vertex new_vertex = Vertex(i, points[i], normals[i], ambient, diffuse, specular);
 		vertexs.push_back(new_vertex);
 	}
 
@@ -164,8 +158,7 @@ vector<TriangleMesh> ReadPLYMesh(char* filename, double size, Vector3d center, V
 		int n, id_a, id_b, id_c;
 		infile >> n >> id_a >> id_b >> id_c;
 		
-		TriangleMesh new_face = TriangleMesh(i, vertexs[id_a], vertexs[id_b], vertexs[id_c],
-			k_reflection, k_refraction, ambient, diffuse, specular);
+		TriangleMesh new_face = TriangleMesh(i, vertexs[id_a], vertexs[id_b], vertexs[id_c], k_reflection, k_refraction);
 		faces.push_back(new_face);
 	}
 	vertexs.clear();

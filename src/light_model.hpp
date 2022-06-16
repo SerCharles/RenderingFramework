@@ -11,14 +11,19 @@ Definition of light and phong model
 class Light
 {
 public:
-	Vector3d color;
 	Vector3d direction;
+	Vector3d ambient;
+	Vector3d diffuse;
+	Vector3d specular;
+
 	Light() {}
 
-	Light(Vector3d& color, Vector3d& direction)
+	Light(Vector3d& direction, Vector3d& ambient, Vector3d& diffuse, Vector3d specular)
 	{
-		this->color = color;
 		this->direction = direction;
+		this->ambient = ambient;
+		this->diffuse = diffuse;
+		this->specular = specular;
 	}
 };
 
@@ -34,9 +39,9 @@ Returns:
 Vector3d GetAmbient(Light& light, Ray& ray, Vertex& vertex)
 {
 	Vector3d ambient;
-	double r = vertex.color(0) * light.color(0);
-	double g = vertex.color(1) * light.color(1);
-	double b = vertex.color(2) * light.color(2);
+	double r = vertex.ambient(0) * light.ambient(0);
+	double g = vertex.ambient(1) * light.ambient(1);
+	double b = vertex.ambient(2) * light.ambient(2);
 	ambient << r, g, b;
 	return ambient;
 }
@@ -60,9 +65,9 @@ Vector3d GetDiffuse(Light& light, Ray& ray, Vertex& vertex)
 	{
 		weight = 0;
 	}
-	double r = light.color(0) * weight;
-	double g = light.color(1) * weight;
-	double b = light.color(2) * weight;
+	double r = vertex.diffuse(0) * light.diffuse(0) * weight;
+	double g = vertex.diffuse(1) * light.diffuse(1) * weight;
+	double b = vertex.diffuse(2) * light.diffuse(2) * weight;
 	diffuse << r, g, b;
 	return diffuse;
 }
@@ -99,9 +104,9 @@ Vector3d GetSpecular(Light& light, Ray& ray, Vertex& vertex)
 	}
 
 	Vector3d specular;
-	double red = light.color(0) * weight;
-	double green = light.color(1) * weight;
-	double blue = light.color(2) * weight;
+	double red = vertex.specular(0) * light.specular(0) * weight;
+	double green = vertex.specular(1) * light.specular(1) * weight;
+	double blue = vertex.specular(2) * light.specular(2) * weight;
 	specular << red, green, blue;
 	return specular;
 }
@@ -122,9 +127,9 @@ Vector3d PhongModel(Light& light, Ray& ray, TriangleMesh& face, Vector3d& fracti
 	color << 0, 0, 0;
 	for (int i = 0; i < 3; i++)
 	{
-		Vector3d ambient = GetAmbient(light, ray, face.vertexs[0]) * face.ambient;
-		Vector3d diffuse = GetDiffuse(light, ray, face.vertexs[0]) * face.diffuse;
-		Vector3d specular = GetSpecular(light, ray, face.vertexs[0]) * face.specular;
+		Vector3d ambient = GetAmbient(light, ray, face.vertexs[0]);
+		Vector3d diffuse = GetDiffuse(light, ray, face.vertexs[0]);
+		Vector3d specular = GetSpecular(light, ray, face.vertexs[0]);
 		Vector3d the_color = ambient + diffuse + specular;
 		color = color + the_color * fraction(i);
 	}
@@ -152,11 +157,15 @@ public:
 
 	RayTracing()
 	{
-		Vector3d light_color;
 		Vector3d light_direction;
-		light_color << 1.0, 1.0, 1.0;
+		Vector3d light_ambient;
+		Vector3d light_diffuse;
+		Vector3d light_specular;
 		light_direction << 0, -1.0, 0;
-		this->light = Light(light_color, light_direction);
+		light_ambient << 1.0, 1.0, 1.0;
+		light_diffuse << 1.0, 1.0, 1.0;
+		light_specular << 1.0, 1.0, 1.0;
+		this->light = Light(light_direction, light_ambient, light_diffuse, light_specular);
 
 		int picture_size = 300;
 		double r = 10 * sqrt(2.0);
@@ -166,27 +175,23 @@ public:
 
 		this->objects.clear();
 		Vector3d center;
-		Vector3d color;
 		double size = 1;
+		Vector3d ambient;
+		Vector3d diffuse;
+		Vector3d specular;
 		double k_reflection = 0;
 		double k_refraction = 0;
-		double refraction_rate = 1;
-		double ambient = 0;
-		double diffuse = 0;
-		double specular = 0;
-
 		
 		char name_board[100] = "C:\\Users\\SerCharles\\Desktop\\res\\board.ply";
 		size = 10 * sqrt(2);
 		center << 0, 0, 0;
-		color << 0.4, 0.4, 0.4;
+		ambient << 0.2, 0.2, 0.2;
+		diffuse << 0.4, 0.4, 0.4;
+		specular << 0.1, 0.1, 0.1;
 		k_reflection = 0.5;
 		k_refraction = 0;
-		ambient = 0.6;
-		diffuse = 0.2;
-		specular = 0.2;
-		vector<TriangleMesh> board_mesh = ReadPLYMesh(name_board, size, center, color,
-			k_reflection, k_refraction, ambient, diffuse, specular);
+		vector<TriangleMesh> board_mesh = ReadPLYMesh(name_board, size, center, ambient, diffuse, specular,
+			k_reflection, k_refraction);
 		MeshModel board = MeshModel(board_mesh);
 		this->objects.push_back(board);
 		
@@ -194,14 +199,13 @@ public:
 		char name_bunny[100] = "C:\\Users\\SerCharles\\Desktop\\res\\bunny.ply";
 		size = 2;
 		center << 0, 3, -4;
-		color << 1, 1, 0.2;
+		ambient << 0.2, 0.2, 0.2;
+		diffuse << 0.7, 0.7, 0.1;
+		specular << 0.1, 0.1, 0.1;
 		k_reflection = 0;
 		k_refraction = 0;
-		ambient = 0.6;
-		diffuse = 0.2;
-		specular = 0.2;
-		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name_bunny, size, center, color,
-			k_reflection, k_refraction, ambient, diffuse, specular);
+		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name_bunny, size, center, ambient, diffuse, specular,
+			k_reflection, k_refraction);
 		MeshModel bunny = MeshModel(bunny_mesh);
 		this->objects.push_back(bunny);
 		
@@ -209,24 +213,29 @@ public:
 		char name_cube[100] = "C:\\Users\\SerCharles\\Desktop\\res\\cube.ply";
 		size = 2;
 		center << 5, 4, 2;
-		color << 0.2, 0.2, 0.2;
+		ambient << 0.2, 0.2, 0.2;
+		diffuse << 0.2, 0.2, 0.2;
+		specular << 0.1, 0.1, 0.1;		
 		k_reflection = 0.2;
 		k_refraction = 0.6;
-		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name_cube, size, center, color,
-			k_reflection, k_refraction, ambient, diffuse, specular);
+		vector<TriangleMesh> dragon_mesh = ReadPLYMesh(name_cube, size, center, ambient, diffuse, specular,
+			k_reflection, k_refraction);
 		MeshModel dragon = MeshModel(dragon_mesh);
 		this->objects.push_back(dragon);
 
+		/*
 		size = 2;
 		center << 0, 8, -3;
-		color << 0.2, 0.2, 0.2;
+		ambient << 0.2, 0.2, 0.2;
+		diffuse << 0.2, 0.2, 0.2;
+		specular << 0.1, 0.1, 0.1;			
 		k_reflection = 0.2;
 		k_refraction = 0.6;
-		vector<TriangleMesh> kebab_mesh = ReadPLYMesh(name_cube, size, center, color,
-			k_reflection, k_refraction, ambient, diffuse, specular);
+		vector<TriangleMesh> kebab_mesh = ReadPLYMesh(name_cube, size, center, ambient, diffuse, specular,
+			k_reflection, k_refraction);
 		MeshModel kebab = MeshModel(kebab_mesh);
 		this->objects.push_back(kebab);
-		
+		*/
 		int total_size = this->camera.height * this->camera.width;
 		this->results = new Vector3d[total_size];
 		
