@@ -61,13 +61,58 @@ vector<Vector3d> TextureMapping(char* filename, vector<Vector2d>& pixels)
 	vector<Vector3d> textures;
 	textures.clear();
 	Mat image = imread(filename);
+	int width = image.rows;
+	int height = image.cols;
 	for (int i = 0; i < pixels.size(); i++)
 	{
-		double x_exact = pixels[i](0);
-		double y_exact = pixels[i](1);
-
+		double x_exact = pixels[i](0) * double(width) - 1;
+		double y_exact = (1 - pixels[i](1)) * double(height) - 1;
+		int x = round(x_exact);
+		int y = round(y_exact);
+		Vector3d result;
+		for (int k = 0; k < 3; k++)
+		{
+			result(k) = double(image.at<Vec3b>(y, x)[2 - k]) / 256.0;
+		}
+		/*
+		if (x_exact <= 0.5)
+		{
+			x_exact = 0.51;
+		}
+		else if (x_exact >= width - 0.5)
+		{
+			x_exact = width - 0.51;
+		}
+		if (y_exact <= 0.5)
+		{
+			y_exact = 0.51;
+		}
+		else if (y_exact >= height - 0.5)
+		{
+			y_exact = height - 0.51;
+		}
+		int x_up = round(x_exact);
+		int y_up = round(y_exact);
+		int x_down = x_up - 1;
+		int y_down = y_up - 1;
+		double rate_x = x_exact - x_down - 0.5;
+		double rate_y = y_exact - y_down - 0.5;
+		
+		Vector3d result;
+		for (int k = 0; k < 3; k++)
+		{
+			double color_left_down = double(image.at<Vec3b>(y_down, x_down)[2 - k]) / 256.0;
+			double color_left_up = double(image.at<Vec3b>(y_up, x_down)[2 - k]) / 256.0;
+			double color_right_down = double(image.at<Vec3b>(y_down, x_up)[2 - k]) / 256.0;
+			double color_right_up = double(image.at<Vec3b>(y_up, x_up)[2 - k]) / 256.0;
+			double color_up = color_left_up * (1 - rate_x) + color_right_up * rate_x;
+			double color_down = color_left_down * (1 - rate_x) + color_right_down * rate_x;
+			double color = color_down * (1 - rate_y) + color_up * rate_y;
+			result(k) = color;
+		}
+		*/
+		textures.push_back(result);
 	}
-
 	return textures;
 }
 
@@ -232,7 +277,6 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 	struct MTLInfo
 	{
 	public:
-		string name;
 		Vector3d ka;
 		Vector3d kd;
 		Vector3d ks;
@@ -241,7 +285,6 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 		string ks_name;
 		MTLInfo() 
 		{
-			name = "";
 			ka << 0, 0, 0;
 			kd << 0, 0, 0;
 			ks << 0, 0, 0;
@@ -251,7 +294,6 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 		}
 		void clear()
 		{
-			name = "";
 			ka << 0, 0, 0;
 			kd << 0, 0, 0;
 			ks << 0, 0, 0;
@@ -266,17 +308,16 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 	vector<Vector3d> normals;
 	vector<Vector2d> pixels;
 	vector<FaceInfo> face_infos;
-	vector<MTLInfo> mtl_infos;
-	vector<Vertex> vertexs;
 	vector<TriangleMesh> faces;
+	map<string, MTLInfo> mtl_infos;
 	map<string, vector<Vector3d>> textures;
 	points.clear();
 	normals.clear();
 	pixels.clear();
 	face_infos.clear();
-	vertexs.clear();
-	faces.clear();
+	mtl_infos.clear();
 	textures.clear();
+	faces.clear();
 	string mtl_path;
 	string mtl_name;
 
@@ -353,25 +394,50 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 	}
 	obj_file.close();
 
+	//normalize the vertexs to the center
+	Vector3d mean;
+	mean << 0, 0, 0;
+	double square_error = 0;
+	for (int i = 0; i < points.size(); i++)
+	{
+		mean = mean + points[i];
+	}
+	mean = mean / double(points.size());
+	for (int i = 0; i < points.size(); i++)
+	{
+		Vector3d dist = mean - points[i];
+		double error = dist.dot(dist);
+		square_error += error;
+	}
+	square_error = square_error / double(points.size());
+	double std_error = sqrt(square_error);
+	for (int i = 0; i < points.size(); i++)
+	{
+		Vector3d p = points[i];
+		p = p - mean;
+		p = p / std_error;
+		p = p * size;
+		p = p + center;
+		points[i] = p;
+	}
+
+
 	//read mtl
 	//TODO: 文件系统转换
 	ifstream mtl_file;
 	mtl_file.open("C:\\Users\\SerCharles\\Desktop\\res\\shiba.mtl");
-	MTLInfo current_mtl;
+	string current_name = "";
 	while (mtl_file.peek() != EOF)
 	{
 		string head;
 		mtl_file >> head;
 		if (head == newmtl)
 		{
-			if (current_mtl.name != "")
-			{
-				mtl_infos.push_back(current_mtl);
-			}
-			current_mtl.clear();
 			string name;
 			mtl_file >> name;
-			current_mtl.name = name;
+			current_name = name;
+			MTLInfo new_mtl;
+			mtl_infos[current_name] = new_mtl;
 		}
 		else if (head == Ka)
 		{
@@ -379,7 +445,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 			Vector3d ka;
 			mtl_file >> r >> g >> b;
 			ka << r, g, b;
-			current_mtl.ka = ka;
+			mtl_infos[current_name].ka = ka;
 		}
 		else if (head == Kd)
 		{
@@ -387,7 +453,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 			Vector3d kd;
 			mtl_file >> r >> g >> b;
 			kd << r, g, b;
-			current_mtl.kd = kd;
+			mtl_infos[current_name].kd = kd;
 		}
 		else if (head == Ks)
 		{
@@ -395,13 +461,13 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 			Vector3d ks;
 			mtl_file >> r >> g >> b;
 			ks << r, g, b;
-			current_mtl.ks = ks;
+			mtl_infos[current_name].ks = ks;
 		}
 		else if (head == map_Ka)
 		{
 			string name;
 			mtl_file >> name;
-			current_mtl.ka_name = name;
+			mtl_infos[current_name].ka_name = name;
 			vector<Vector3d> v;
 			v.clear();
 			textures[name] = v;
@@ -410,7 +476,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 		{
 			string name;
 			mtl_file >> name;
-			current_mtl.kd_name = name;
+			mtl_infos[current_name].kd_name = name;
 			vector<Vector3d> v;
 			v.clear();
 			textures[name] = v;
@@ -419,7 +485,7 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 		{
 			string name;
 			mtl_file >> name;
-			current_mtl.ks_name = name;
+			mtl_infos[current_name].ks_name = name;
 			vector<Vector3d> v;
 			v.clear();
 			textures[name] = v;
@@ -431,14 +497,75 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 		}
 	}
 	mtl_file.close();
-	if (current_mtl.name != "")
-	{
-		mtl_infos.push_back(current_mtl);
-	}
+
 
 	//read all the textures
+	vector<string> texture_names;
+	texture_names.clear();
+	for (auto it : textures) 
+	{
+		string texture_name = it.first;
+		texture_names.push_back(texture_name);
+	}
+	for (int i = 0; i < texture_names.size(); i++)
+	{
+		char texture_path[100] = "C:\\Users\\SerCharles\\Desktop\\res\\shiba.png";
+		textures[texture_names[i]] = TextureMapping(texture_path, pixels);
+	}
+	texture_names.clear();
 
 
+	//build the vertexs and faces
+	for (int i = 0; i < face_infos.size(); i++)
+	{
+		FaceInfo face_info = face_infos[i];
+		Vector3d point_a = points[face_info.av];
+		Vector3d point_b = points[face_info.bv];
+		Vector3d point_c = points[face_info.cv];
+		Vector3d normal_a = normals[face_info.an];
+		Vector3d normal_b = normals[face_info.bn];
+		Vector3d normal_c = normals[face_info.cn];
+		string mtl_name = face_info.mtl_name;
+		MTLInfo mtl_info = mtl_infos[mtl_name];
+		Vector3d ka_a = mtl_info.ka;
+		Vector3d ka_b = mtl_info.ka;
+		Vector3d ka_c = mtl_info.ka;
+		Vector3d kd_a = mtl_info.kd;
+		Vector3d kd_b = mtl_info.kd;
+		Vector3d kd_c = mtl_info.kd;
+		Vector3d ks_a = mtl_info.ks;
+		Vector3d ks_b = mtl_info.ks; 
+		Vector3d ks_c = mtl_info.ks;
+		string ka_name = mtl_info.ka_name;
+		string kd_name = mtl_info.kd_name;
+		string ks_name = mtl_info.ks_name;
+		if (ka_name != "")
+		{
+			vector<Vector3d> ka_list = textures[ka_name];
+			ka_a = ka_list[face_info.ap];
+			ka_b = ka_list[face_info.bp];
+			ka_c = ka_list[face_info.cp];
+		}
+		if (kd_name != "")
+		{
+			vector<Vector3d> kd_list = textures[kd_name];
+			kd_a = kd_list[face_info.ap];
+			kd_b = kd_list[face_info.bp];
+			kd_c = kd_list[face_info.cp];
+		}
+		if (ks_name != "")
+		{
+			vector<Vector3d> ks_list = textures[ks_name];
+			ks_a = ks_list[face_info.ap];
+			ks_b = ks_list[face_info.bp];
+			ks_c = ks_list[face_info.cp];
+		}
+		Vertex a = Vertex(face_info.av, point_a, normal_a, ka_a, kd_a, ks_a);
+		Vertex b = Vertex(face_info.bv, point_b, normal_b, ka_b, kd_b, ks_b);
+		Vertex c = Vertex(face_info.cv, point_c, normal_c, ka_c, kd_c, ks_c);
+		TriangleMesh face = TriangleMesh(i, a, b, c, k_reflection, k_refraction);
+		faces.push_back(face);
+	}
 
 
 	//clear and return
@@ -447,7 +574,6 @@ vector<TriangleMesh> ReadOBJMesh(char* filename, double size, Vector3d center, d
 	pixels.clear();
 	face_infos.clear();
 	mtl_infos.clear();
-	vertexs.clear();
 	textures.clear();
 	return faces;
 }
@@ -526,7 +652,7 @@ bool JudgeFaceInsideBox(TriangleMesh& face, BoundingBox& box)
 class OctNode
 {
 public:
-	const int min_faces = 5;
+	const int min_faces = 50;
 	const int max_depth = 4;
 	int depth;
 	vector<TriangleMesh> faces;

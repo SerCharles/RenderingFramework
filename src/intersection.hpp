@@ -195,20 +195,20 @@ Args:
 */
 void GetIntersectionRayMeshModel(Ray& ray, MeshModel& mesh_model, int& id, double& t, Vector3d& fraction)
 {
-	vector<TriangleMesh> all_intersection_mesh_list;
-	all_intersection_mesh_list.clear();
-	GetAllIntersectionRayOctNode(ray, mesh_model.root, all_intersection_mesh_list);
 	t = DBL_MAX;
 	id = -1;
-	for (int i = 0; i < all_intersection_mesh_list.size(); i++)
+	vector<TriangleMesh> all_possible_faces;
+	all_possible_faces.clear();
+	GetAllIntersectionRayOctNode(ray, mesh_model.root, all_possible_faces);
+	for (int i = 0; i < all_possible_faces.size(); i++)
 	{
 		double the_t = -1;
 		Vector3d the_fraction;
-		GetIntersectionRayMesh(ray, all_intersection_mesh_list[i], the_t, the_fraction);
+		GetIntersectionRayMesh(ray, all_possible_faces[i], the_t, the_fraction);
 		if (the_t > 0 && the_t < t)
 		{
 			t = the_t;
-			id = all_intersection_mesh_list[i].id;
+			id = all_possible_faces[i].id;
 			fraction = the_fraction;
 		}
 	}
