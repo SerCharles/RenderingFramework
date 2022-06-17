@@ -168,7 +168,7 @@ public:
 		this->light = Light(light_direction, light_ambient, light_diffuse, light_specular);
 
 		int picture_size = 300;
-		double r = 5 * sqrt(2.0);
+		double r = 10 * sqrt(2.0);
 		double theta = 135.0 / 180.0 * PI;
 		double phi = 0;
 		this->camera = Camera(picture_size, r, theta, phi);
@@ -183,36 +183,48 @@ public:
 		double k_refraction = 0;
 		
 		
-		char name_board[100] = "res\\board.ply";
-		size = 20 * sqrt(2);
+		string name_board = "res\\board.ply";
+		size = 10 * sqrt(2);
 		center << 0, 0, 0;
 		ambient << 0.2, 0.2, 0.2;
 		diffuse << 0.4, 0.4, 0.4;
-		specular << 0.1, 0.1, 0.1;
+		specular << 0.2, 0.2, 0.2;
 		k_reflection = 0.4;
 		k_refraction = 0;
-		vector<TriangleMesh> board_mesh = ReadPLYMesh(name_board, size, center, ambient, diffuse, specular,
+		vector<TriangleMesh> board_mesh = ReadPLYMesh(name_board, size, center, ambient, diffuse, specular, 
 			k_reflection, k_refraction);
 		MeshModel board = MeshModel(board_mesh);
 		this->objects.push_back(board);
 		
 
-		char name_shiba[100] = "res\\shiba.obj";
+		string name_shiba = "res\\shiba.obj";
 		size = 2;
-		center << 0, 3, 0;
+		center << 0, 3, 5;
 		k_reflection = 0;
 		k_refraction = 0;
 		vector<TriangleMesh> shiba_mesh = ReadOBJMesh(name_shiba, size, center, k_reflection, k_refraction);
 		MeshModel shiba = MeshModel(shiba_mesh);
 		this->objects.push_back(shiba);
 		
-		
-		char name_cube[100] = "res\\cube.ply";
+		string name_bunny = "res\\bunny.ply";
 		size = 2;
-		center << 5, 4, 2;
+		center << 5, 2, 0;
+		ambient << 0.2, 0.2, 0.2;
+		diffuse << 0.7, 0.7, 0.2;
+		specular << 0.2, 0.2, 0.2;
+		k_reflection = 0.2;
+		k_refraction = 0.1;
+		vector<TriangleMesh> bunny_mesh = ReadPLYMesh(name_bunny, size, center, ambient, diffuse, specular,
+			k_reflection, k_refraction);
+		MeshModel bunny = MeshModel(bunny_mesh);
+		this->objects.push_back(bunny);
+		
+		string name_cube = "res\\cube.ply";
+		size = 2;
+		center << -5, 4, 4;
 		ambient << 0.2, 0.2, 0.2;
 		diffuse << 0.2, 0.2, 0.2;
-		specular << 0.1, 0.1, 0.1;		
+		specular << 0.2, 0.2, 0.2;		
 		k_reflection = 0.1;
 		k_refraction = 0.6;
 		vector<TriangleMesh> cube_mesh = ReadPLYMesh(name_cube, size, center, ambient, diffuse, specular,
